@@ -4,10 +4,12 @@ Arachne is a simplistic net &amp; spider toolbox. It contains the utilities you 
 
 ## Timeline
 
-Arachne is going to be populated with a selection of restructured utilities that live in the internal system ecology at Jajja.
+Arachne is going to be populated with a selection of restructured utilities that live in the internal system ecology at [Jajja][1].
 
 The project to gather and simplify tools used currently for crawling and handling net resources is ongoing. The current priority is:
 
 * Documentation and examples
 * URLs, Parameters (parsing and resolve)
 * HTTP, Cookies, Proxies (possibly by wrapping an existing client)
+
+[1]: http://www.jajja.com
