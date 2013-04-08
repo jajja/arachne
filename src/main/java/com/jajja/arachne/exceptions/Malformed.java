@@ -23,14 +23,14 @@ package com.jajja.arachne.exceptions;
 
 public class Malformed extends Exception {
 
-	private static final long serialVersionUID = -1L;
-	
-	public Malformed(String message) {
-		super(message);
-	}
-	
-	public Malformed(String message, Throwable cause) {
-		super(message, cause);
-	}
+    private static final long serialVersionUID = -1L;
+    
+    public Malformed(String message) {
+        super(message);
+    }
+    
+    public Malformed(String message, Throwable cause) {
+        super(message, cause);
+    }
 
 }
