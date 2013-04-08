@@ -1,6 +1,6 @@
 # Arachne
 
-Arachne is a simplistic net &amp; spider toolbox. It contains the utilities you might have use for when storing link data mined on the Internet.
+Arachne is a simplistic net &amp; spider toolbox. It contains the utilities you might have use for when storing link data mined on the Internet. It can also be used to validate and normalize data.
 
 ## Timeline
 
