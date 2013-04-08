@@ -23,40 +23,38 @@ package com.jajja.arachne.net;
 
 public class Record {
 
-	private String entry;
-	
-	private String suffix;
-	
-	private String pattern;
+    private String entry;
+    private String suffix;
+    private String pattern;
 
-	public String getEntry() {
-		return entry;
-	}
+    public String getEntry() {
+        return entry;
+    }
 
-	public void setEntry(String entry) {
-		this.entry = entry;
-	}
+    public void setEntry(String entry) {
+        this.entry = entry;
+    }
 
-	public String getSuffix() {
-		return suffix;
-	}
+    public String getSuffix() {
+        return suffix;
+    }
 
-	public void setSuffix(String suffix) {
-		this.suffix = suffix;
-	}
+    public void setSuffix(String suffix) {
+        this.suffix = suffix;
+    }
 
-	public String getPattern() {
-		return pattern;
-	}
+    public String getPattern() {
+        return pattern;
+    }
 
-	public void setPattern(String pattern) {
-		this.pattern = pattern;
-	}
+    public void setPattern(String pattern) {
+        this.pattern = pattern;
+    }
 
-	@Override
-	public String toString() {
-		return "{ entry => " + entry + ", suffix => " + suffix
-				+ ", pattern => " + pattern + " }";
-	}
-	
+    @Override
+    public String toString() {
+        return "{ entry => " + entry + ", suffix => " + suffix
+                + ", pattern => " + pattern + " }";
+    }
+    
 }

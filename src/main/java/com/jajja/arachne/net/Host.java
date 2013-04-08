@@ -26,27 +26,27 @@ import com.jajja.arachne.exceptions.MalformedDomain;
 import static com.jajja.arachne.net.Address.*;
 
 public abstract class Host {
-	
-	public static Host get(String name) throws MalformedDomain {
-		if (isAddress(name)) {
-			return new Address(name);
-		} else {
-			return new Domain(name);
-		}
-	}
+    
+    public static Host get(String name) throws MalformedDomain {
+        if (isAddress(name)) {
+            return new Address(name);
+        } else {
+            return new Domain(name);
+        }
+    }
 
-	static boolean isAddress(String name) {
-		return isIpv4(name) || isIpv6(name);
-	}
+    static boolean isAddress(String name) {
+        return isIpv4(name) || isIpv6(name);
+    }
 
-	private String name;
-	
-	Host(String name) {
-		this.name = name;
-	}
-	
-	public String getName() {
-		return name;
-	}
+    private String name;
+    
+    Host(String name) {
+        this.name = name;
+    }
+    
+    public String getName() {
+        return name;
+    }
 
 }

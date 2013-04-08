@@ -23,7 +23,7 @@ package com.jajja.arachne.exceptions;
 
 public class MalformedDomain extends Malformed {
 
-	private static final long serialVersionUID = 6141445781762596793L;
+	private static final long serialVersionUID = -1;
 	
 	private String domain;
 	

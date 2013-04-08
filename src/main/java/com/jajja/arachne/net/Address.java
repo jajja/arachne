@@ -23,24 +23,24 @@ package com.jajja.arachne.net;
 
 
 public class Address extends Host {
-	
-	public Address(String name) {
-		super(name);
-	}
-	
-	public boolean isIpv4() {
-		return isIpv4(getName());
-	}
-	
-	public boolean isIpv6() {
-		return isIpv6(getName());
-	}
-	
-	static boolean isIpv4(String name) {
-		return false; // TODO: implement
-	}
-	
-	static boolean isIpv6(String name) {
-		return false; // TODO: implement
-	}
+    
+    public Address(String name) {
+        super(name);
+    }
+    
+    public boolean isIpv4() {
+        return isIpv4(getName());
+    }
+    
+    public boolean isIpv6() {
+        return isIpv6(getName());
+    }
+    
+    static boolean isIpv4(String name) {
+        return false; // TODO: implement
+    }
+    
+    static boolean isIpv6(String name) {
+        return false; // TODO: implement
+    }
 }

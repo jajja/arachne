@@ -14,7 +14,7 @@
     <groupId>com.jajja</groupId>
     <artifactId>arachne</artifactId>
     <version>1.0.0-rc1</version>
-    <description>Arachne is a collection of web utilities suitable for spiders and crawling applications.</description>
+    <description>Arachne is a simplistic net &amp; spider toolbox.</description>
     <packaging>jar</packaging>
 
     <dependencies>
