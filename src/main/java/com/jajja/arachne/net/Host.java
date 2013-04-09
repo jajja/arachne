@@ -21,21 +21,50 @@
  */
 package com.jajja.arachne.net;
 
+import com.jajja.arachne.exceptions.MalformedAddress;
 import com.jajja.arachne.exceptions.MalformedDomain;
 
 import static com.jajja.arachne.net.Address.*;
 
+/**
+ * An abstract Internet host, which can be either an Address or a Domain, as
+ * entities regulated by ICANN.
+ * 
+ * @author Martin Korinth <martin.korinth@jajja.com>
+ */
 public abstract class Host {
     
+    /**
+     * Facilitates creation of a host according to the given host name.
+     * 
+     * @param name
+     *            the host name
+     * @return the host represented by either an address or a domain
+     * @throws MalformedDomain
+     *             when the name can not be resolved as an address and is not a
+     *             legal domain.
+     */
     public static Host get(String name) throws MalformedDomain {
+        Host host = null;
         if (isAddress(name)) {
-            return new Address(name);
-        } else {
-            return new Domain(name);
+            try {
+                return new Address(name);
+            } catch (MalformedAddress e) {
+                throw new IllegalStateException("Call pest control, there is a bug!", e); // cannot happen?!
+            }
         }
+        return host != null ? host : new Domain(name);
     }
 
-    static boolean isAddress(String name) {
+    /**
+     * Tells whether a host name is an address or not.
+     * 
+     * @param name
+     *            the host name
+     * @return true if the host name corresponds to either an IPv4 or an IPv6
+     *         address, false otherwise
+     */
+    public static boolean isAddress(String name) {
         return isIpv4(name) || isIpv6(name);
     }
 
@@ -45,6 +74,11 @@ public abstract class Host {
         this.name = name;
     }
     
+    /**
+     * Provides the host name.
+     * 
+     * @return the name of the host
+     */
     public String getName() {
         return name;
     }

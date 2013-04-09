@@ -40,8 +40,24 @@ import org.apache.commons.logging.LogFactory;
 
 import com.jajja.arachne.exceptions.MalformedDomain;
 
+/**
+ * A class for parsing Internet domains and matching public suffix records. The
+ * public suffix records can be used to group domains by site or to avoid
+ * privacy-damaging cookies related to domain hierarchy.
+ * 
+ * The public suffix implementation of this class is based on the public suffix
+ * reference initiative by Mozilla. The original public suffix list has been
+ * split into ICANN "registered" and private "subleased" records. Several
+ * private records such as *.wordpress.com or the like have been added to the
+ * private list, and the ICANN list has been augmented with missing entries.
+ * 
+ * For reference check out: http://publicsuffix.org
+ * 
+ * @author Martin Korinth <martin.korinth@jajja.com>
+ */
 public class Domain extends Host {
-
+    
+    private static Log log = LogFactory.getLog(Domain.class);
     private static Map<String, List<Suffix>> publicSuffices = Suffix.loadPublic();
     private static Map<String, List<Suffix>> privateSuffices = Suffix.loadPrivate();
     
@@ -50,49 +66,102 @@ public class Domain extends Host {
     private String fqdn;
     private String tld;
     private String sld;
-    private Record publicRecord;
-    private Record privateRecord;
+    private Record registeredRecord;
+    private Record subleasedRecord;
     
+    /**
+     * Creates a domain by parsing the name and matching records from the public
+     * suffix lists for ICANN "registered" and private "subleased" records.
+     * 
+     * @param name
+     *            the domain name
+     * @throws MalformedDomain
+     *             when the domain name can not be parsed as a domain
+     */
     public Domain(String name) throws MalformedDomain {
         super(IDN.toASCII(name));
         parse();
         match();
     }
     
+    /**
+     * Provides the fully qualified domain name of the domain, all in lower-case
+     * letters.
+     * 
+     * @return the fully qualified domain name
+     */
     public String getFqdn() {
         return fqdn;
     }
     
+    /**
+     * Provides the top level domain (name) of the domain, all in lower-case letters.
+     * 
+     * @return the top level domain
+     */
     public String getTld() {
         return tld;
     }
     
+    /**
+     * Provides the second level domain (name) of the domain, all in lower-case
+     * letters.
+     * 
+     * @return the second level domain, or null if the domain only has one
+     *         level
+     */
     public String getSld() {
         return sld;
     }
     
+    /**
+     * Provides the most specific existing record of the domain, which can be
+     * used to group domains by site or avoid privacy-damaging cookies.
+     * 
+     * @return the most specific record match, the subleased record if such
+     *         exist, the registered record if such exists, otherwise null
+     */
     public Record getRecord() {
-        return privateRecord != null ? privateRecord : publicRecord;
+        return isSubleased() ? subleasedRecord : registeredRecord;
     }
 
-    public Record getPublicRecord() {
-        return publicRecord;
+    /**
+     * Provides the registered record of the domain if such exists.
+     * 
+     * @return the registered record if such exists, otherwise null
+     */
+    public Record getRegisteredRecord() {
+        return registeredRecord;
     }
 
-    public Record getPrivateRecord() {
-        return privateRecord;
+    /**
+     * Provides the subleased record of the domain if such exists.
+     * 
+     * @return the subleased record if such exists, otherwise null
+     */
+    public Record getSubleasedRecord() {
+        return subleasedRecord;
     }
     
-    public boolean isIcannRecord() {
-        return publicRecord != null;
+    /**
+     * Tells whether the domain is a registered or not. A domain is registered
+     * if it is a subdomain to a reserved public prefix according to ICANN.
+     * 
+     * @return true if the domain is registered, false otherwise
+     */
+    public boolean isRegistered() {
+        return registeredRecord != null;
     }
     
-    public boolean isPublicRecord() {
-        return publicRecord != null;
-    }
-    
-    public boolean isPrivateRecord() {
-        return privateRecord != null;
+    /**
+     * Tells whether the domain is subleased or not. A domain is subleased if it
+     * is a subdomain to a registered domain known to provide subdomains to
+     * externally or internally hosted autonomous sites.
+     * 
+     * @return true if the domain is subleased, false otherwise
+     */
+    public boolean isSubleased() {
+        return subleasedRecord != null;
     }
     
     private void parse() throws MalformedDomain {
@@ -117,17 +186,12 @@ public class Domain extends Host {
     }
     
     private void match() {
-        try {
-            publicRecord = getRecord(publicSuffices.get(tld), labels);
-            if (publicRecord != null) {
-                Record record = getRecord(privateSuffices.get(tld), labels);
-                if (record != null && !record.getEntry().equals("www." + publicRecord.getEntry())) {
-                    privateRecord = record;
-                }
+        registeredRecord = getRecord(publicSuffices.get(tld), labels);
+        if (registeredRecord != null) {
+            Record record = getRecord(privateSuffices.get(tld), labels);
+            if (record != null && !record.getEntry().equals("www." + registeredRecord.getEntry())) {
+                subleasedRecord = record;
             }
-        } catch (Exception exception) {
-            exception.printStackTrace();
-//            log.warn("Failed to extract suffix or registry from " + string, exception);
         }
     }
 
@@ -150,8 +214,8 @@ public class Domain extends Host {
     @Override
     public String toString() {
         return "{ fqdn => " + fqdn + ", labels => " + Arrays.toString(labels)
-                + ", tld => " + tld + ", sld => " + sld + ", publicRecord => "
-                + publicRecord + ", privateRecord => " + privateRecord + " }";
+                + ", tld => " + tld + ", sld => " + sld + ", record => "
+                + getRecord() + ", isLeased => " + isSubleased() + " }";
     }
     
     public static void main(String[] args) {
@@ -183,7 +247,7 @@ public class Domain extends Host {
             patterns = IDN.toASCII(definition.replaceAll("[!]", "")).split("\\.");
         }
         
-        public Record match(String[] labels) {
+        Record match(String[] labels) {
             String entry = "";
             for (int i = 0; i < Math.min(patterns.length, labels.length); i++) {
                 String pattern = patterns[patterns.length - (i + 1)];
@@ -214,30 +278,15 @@ public class Domain extends Host {
             return match;
         }
         
-        public String getTld() {
+        private String getTld() {
             return patterns[patterns.length - 1];
         }
         
-        public int weight() {
+        private int weight() {
             return patterns.length + (isException ? 100000 : 0);
         }
-
-        @Override
-        public String toString() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("[ definition => ");
-            builder.append(definition);
-            builder.append(", labels => ");
-            builder.append(Arrays.asList(patterns));
-            builder.append(", isException => ");
-            builder.append(isException);
-            builder.append(" ]");
-            return builder.toString();
-        }
         
-        private static Log log = LogFactory.getLog(Suffix.class);
-        
-        public static Map<String, List<Suffix>> loadPublic() {
+        static Map<String, List<Suffix>> loadPublic() {
             Map<String, List<Suffix>> map = new HashMap<String, List<Suffix>>();
             add("/suffix/icann_effective_tld_names.dat", map);
             add("/suffix/icann_patch_tld_names.dat", map);
@@ -247,7 +296,7 @@ public class Domain extends Host {
             return map;
         }
         
-        public static Map<String, List<Suffix>> loadPrivate() {
+        static Map<String, List<Suffix>> loadPrivate() {
             Map<String, List<Suffix>> map = new HashMap<String, List<Suffix>>();
             add("/suffix/private_effective_tld_names.dat", map);
             add("/suffix/private_patch_tld_names.dat", map);
@@ -312,6 +361,19 @@ public class Domain extends Host {
         @Override
         public int compareTo(Suffix rule) {
             return rule.weight() - weight();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("[ definition => ");
+            builder.append(definition);
+            builder.append(", labels => ");
+            builder.append(Arrays.asList(patterns));
+            builder.append(", isException => ");
+            builder.append(isException);
+            builder.append(" ]");
+            return builder.toString();
         }
         
     }

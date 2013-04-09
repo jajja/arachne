@@ -21,26 +21,74 @@
  */
 package com.jajja.arachne.net;
 
+import com.jajja.arachne.exceptions.MalformedAddress;
 
+/**
+ * A class for parsing Internet addresses.
+ * 
+ * @author Martin Korinth <martin.korinth@jajja.com>
+ */
 public class Address extends Host {
     
-    public Address(String name) {
+    private boolean isIpv4;
+    private boolean isIpv6;
+    
+    /**
+     * Creates an address by parsing the name.
+     * 
+     * @param name
+     *            the domain name
+     * @throws MalformedAddress
+     *             when the address name can not be parsed as an address
+     */
+    public Address(String name) throws MalformedAddress {
         super(name);
+        parse();
     }
     
+    /**
+     * Tells whether the address name is IPv4 or not.
+     * 
+     * @return true if the address is IPv4, false otherwise
+     */
     public boolean isIpv4() {
-        return isIpv4(getName());
+        return isIpv4;
     }
     
+    /**
+     * Tells whether the address name is IPv6 or not.
+     * 
+     * @return true if the address is IPv6, false otherwise
+     */
     public boolean isIpv6() {
-        return isIpv6(getName());
+        return isIpv6;
     }
     
-    static boolean isIpv4(String name) {
+    /**
+     * Tells whether a host name is an IPv4 address or not.
+     * 
+     * @param name
+     *            the host name
+     * @return true if the host name corresponds to an IPv4 address, false
+     *         otherwise
+     */
+    public static boolean isIpv4(String name) {
         return false; // TODO: implement
     }
     
-    static boolean isIpv6(String name) {
+    /**
+     * Tells whether a host name is an IPv6 address or not.
+     * 
+     * @param name
+     *            the host name
+     * @return true if the host name corresponds to an IPv6 address, false
+     *         otherwise
+     */
+    public static boolean isIpv6(String name) {
         return false; // TODO: implement
+    }
+    
+    private void parse() throws MalformedAddress {
+        // TODO: implement
     }
 }
