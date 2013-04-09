@@ -70,6 +70,10 @@ public class Domain extends Host {
     public String getSld() {
         return sld;
     }
+    
+    public Record getRecord() {
+        return privateRecord != null ? privateRecord : publicRecord;
+    }
 
     public Record getPublicRecord() {
         return publicRecord;
@@ -77,6 +81,18 @@ public class Domain extends Host {
 
     public Record getPrivateRecord() {
         return privateRecord;
+    }
+    
+    public boolean isIcannRecord() {
+        return publicRecord != null;
+    }
+    
+    public boolean isPublicRecord() {
+        return publicRecord != null;
+    }
+    
+    public boolean isPrivateRecord() {
+        return privateRecord != null;
     }
     
     private void parse() throws MalformedDomain {
@@ -146,6 +162,8 @@ public class Domain extends Host {
             System.out.println(new Domain("peat.co.uk"));
             System.out.println(new Domain("peat.co.se"));
             System.out.println(new Domain("pEaT.sE"));
+            System.out.println(new Domain("peat.local"));
+            System.out.println(new Domain("local"));
         } catch (MalformedDomain e) {
             e.printStackTrace();
         }
