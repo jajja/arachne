@@ -58,10 +58,11 @@ import com.jajja.arachne.exceptions.MalformedDomain;
 public class Domain extends Host {
     
     private static Log log = LogFactory.getLog(Domain.class);
-    private static Map<String, List<Suffix>> publicSuffices = Suffix.loadPublic();
-    private static Map<String, List<Suffix>> privateSuffices = Suffix.loadPrivate();
+    private static Map<String, List<Rule>> icannRules = Rule.loadIcann();
+    private static Map<String, List<Rule>> privateRules = Rule.loadPrivate();
     
     private String[] labels;
+    private boolean isMatched = false;
     
     private String fqdn;
     private String tld;
@@ -104,14 +105,46 @@ public class Domain extends Host {
     }
     
     /**
-     * Provides the second level domain (name) of the domain, all in lower-case
-     * letters.
+     * Provides the second level domain (name) of the domain, all in lower-case letters.
      * 
-     * @return the second level domain, or null if the domain only has one
-     *         level
+     * @return the top level domain
      */
     public String getSld() {
         return sld;
+    }
+    
+    /**
+     * Provides the suffix of the most specific existing record of the domain.
+     * 
+     * @return the suffix of the most specific existing record of the domain if
+     *         such exists, otherwise null
+     */
+    public String getSuffix() {
+        Record record = getRecord();
+        return record != null ? record.getSuffix() : null;
+    }
+    
+    /**
+     * Provides the entry of the most specific existing record of the domain.
+     * 
+     * @return the suffix of the most specific existing record of the domain if
+     *         such exists, otherwise null
+     */
+    public String getEntry() {
+        Record record = getRecord();
+        return record != null ? record.getEntry() : null;
+    }
+    
+    /**
+     * Provides the matched rule of the most specific existing record of the
+     * domain.
+     * 
+     * @return the matched rule of the most specific existing record of the
+     *         domain if such exists, otherwise null
+     */
+    public String getRule() {
+        Record record = getRecord();
+        return record != null ? record.getRule() : null;
     }
     
     /**
@@ -186,22 +219,25 @@ public class Domain extends Host {
     }
     
     private void match() {
-        registeredRecord = getRecord(publicSuffices.get(tld), labels);
-        if (registeredRecord != null) {
-            Record record = getRecord(privateSuffices.get(tld), labels);
-            if (record != null && !record.getEntry().equals("www." + registeredRecord.getEntry())) {
-                subleasedRecord = record;
+        if (!isMatched) {
+            registeredRecord = getRecord(icannRules.get(tld), labels);
+            if (registeredRecord != null) {
+                Record record = getRecord(privateRules.get(tld), labels);
+                if (record != null && !record.getEntry().equals("www." + registeredRecord.getEntry())) {
+                    subleasedRecord = record;
+                }
             }
+            isMatched = true;
         }
     }
 
-    private Record getRecord(List<Suffix> rules, String[] labels) {
+    private Record getRecord(List<Rule> rules, String[] labels) {
         Record record = null;
         if (rules != null) {
-            for (Suffix rule : rules) {
+            for (Rule rule : rules) {
                 record = rule.match(labels);
                 if (record != null) {
-                    if (record.getEntry() == null) {
+                    if (record.getEntry().isEmpty()) {
                         record = null;
                     }
                     break;
@@ -233,7 +269,7 @@ public class Domain extends Host {
         }
     }
     
-    private static class Suffix implements Comparable<Suffix> {
+    private static class Rule implements Comparable<Rule> {
         
         private String definition;
         
@@ -241,7 +277,7 @@ public class Domain extends Host {
         
         private String[] patterns;
         
-        private Suffix(String definition) {
+        private Rule(String definition) {
             this.definition = definition;
             isException = definition.startsWith("!");                    
             patterns = IDN.toASCII(definition.replaceAll("[!]", "")).split("\\.");
@@ -269,13 +305,13 @@ public class Domain extends Host {
                     entry = "";
                 }
             }
-            Record match = new Record();
-            match.setEntry(entry);
-            if (!entry.isEmpty()) {
-                match.setPattern(definition);
-                match.setSuffix(isException ? entry : entry.substring(Math.max(0, entry.indexOf('.') + 1)));
+            Record record = new Record();
+            record.setEntry(entry);
+            if (entry.isEmpty()) {
+                record.setRule(definition);
+                record.setSuffix(isException ? entry : entry.substring(Math.max(0, entry.indexOf('.') + 1)));                
             }
-            return match;
+            return record;
         }
         
         private String getTld() {
@@ -283,11 +319,11 @@ public class Domain extends Host {
         }
         
         private int weight() {
-            return patterns.length + (isException ? 100000 : 0);
+            return patterns.length + (isException ? 255 : 0);
         }
         
-        static Map<String, List<Suffix>> loadPublic() {
-            Map<String, List<Suffix>> map = new HashMap<String, List<Suffix>>();
+        static Map<String, List<Rule>> loadIcann() {
+            Map<String, List<Rule>> map = new HashMap<String, List<Rule>>();
             add("/suffix/icann_effective_tld_names.dat", map);
             add("/suffix/icann_patch_tld_names.dat", map);
             for (String tld : map.keySet()) {
@@ -296,8 +332,8 @@ public class Domain extends Host {
             return map;
         }
         
-        static Map<String, List<Suffix>> loadPrivate() {
-            Map<String, List<Suffix>> map = new HashMap<String, List<Suffix>>();
+        static Map<String, List<Rule>> loadPrivate() {
+            Map<String, List<Rule>> map = new HashMap<String, List<Rule>>();
             add("/suffix/private_effective_tld_names.dat", map);
             add("/suffix/private_patch_tld_names.dat", map);
             for (String tld : map.keySet()) {
@@ -306,39 +342,39 @@ public class Domain extends Host {
             return map;
         }
         
-        private static void add(String file,  Map<String, List<Suffix>> map) {
-            for (Suffix rule : read(file)) {
-                List<Suffix> rules = map.get(rule.getTld());
+        private static void add(String file,  Map<String, List<Rule>> map) {
+            for (Rule rule : read(file)) {
+                List<Rule> rules = map.get(rule.getTld());
                 if (rules == null) {
-                    rules = new LinkedList<Suffix>();
+                    rules = new LinkedList<Rule>();
                     map.put(rule.getTld(), rules);
                 }
                 rules.add(rule);            
             }
         }
         
-        private static List<Suffix> read(String file) {
-            List<Suffix> rules = null;
+        private static List<Rule> read(String file) {
+            List<Rule> rules = null;
             try {
                 log.info("Trying file resource for " + file);
                 rules = read(new FileInputStream(new File("/var/lib/bruichladdich" + file)));
             } catch (Exception e) {
                 log.info("Trying class path resource for effective TLD names " + file);
-                rules = read(Suffix.class.getResourceAsStream(file));
+                rules = read(Rule.class.getResourceAsStream(file));
             }
-            return rules != null ? rules : new LinkedList<Suffix>();
+            return rules != null ? rules : new LinkedList<Rule>();
         }
         
-        private static List<Suffix> read(InputStream inputStream) {
+        private static List<Rule> read(InputStream inputStream) {
             BufferedReader bufferedReader = null;
-            List<Suffix> rules = new LinkedList<Suffix>();
+            List<Rule> rules = new LinkedList<Rule>();
             try {
                 bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
                 String line = null;
                 while ((line = bufferedReader.readLine()) != null) {
                     if (!line.matches("(\\s+.*)|(/+.*)") && !line.isEmpty()) {
                         try {
-                            rules.add(new Suffix(line));                        
+                            rules.add(new Rule(line));                        
                         } catch (Exception e) {
                             log.error("Failed to parse public domain suffix rule from line: " + line, e);
                         }
@@ -359,7 +395,7 @@ public class Domain extends Host {
         }
 
         @Override
-        public int compareTo(Suffix rule) {
+        public int compareTo(Rule rule) {
             return rule.weight() - weight();
         }
 

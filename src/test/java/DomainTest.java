@@ -1,110 +1,115 @@
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.jajja.arachne.exceptions.MalformedDomain;
 import com.jajja.arachne.net.Domain;
+import com.jajja.arachne.net.Record;
 
 public class DomainTest {
     
     @Test public void mixcase() { // Mixed case.
-        assertPublicSuffix("COM", null);
-        assertPublicSuffix("example.COM", "example.com");
-        assertPublicSuffix("WwW.example.COM", "example.com");       
+        checkPublicSuffix("COM", null);
+        checkPublicSuffix("example.COM", "example.com");
+        checkPublicSuffix("WwW.example.COM", "example.com");       
     }
 
     @Test public void period() { // Leading dot.
-        assertPublicSuffix(".com", null);
-        assertPublicSuffix(".example", null);
-        assertPublicSuffix(".example.com", null);
-        assertPublicSuffix(".example.example", null);       
+        checkPublicSuffix(".com", null);
+        checkPublicSuffix(".example", null);
+        checkPublicSuffix(".example.com", null);
+        checkPublicSuffix(".example.example", null);       
     }
     
     @Test public void example() { // Unlisted TLD.
-        assertPublicSuffix("example", null);
-        assertPublicSuffix("example.example", null);
-        assertPublicSuffix("b.example.example", null);
-        assertPublicSuffix("a.b.example.example", null);
+        checkPublicSuffix("example", null);
+        checkPublicSuffix("example.example", null);
+        checkPublicSuffix("b.example.example", null);
+        checkPublicSuffix("a.b.example.example", null);
     }
     
     @Test public void local() { // Listed, but non-Internet, TLD.
-        assertPublicSuffix("local", null);
-        assertPublicSuffix("example.local", null);
-        assertPublicSuffix("b.example.local", null);
-        assertPublicSuffix("a.b.example.local", null);
+        checkPublicSuffix("local", null);
+        checkPublicSuffix("example.local", null);
+        checkPublicSuffix("b.example.local", null);
+        checkPublicSuffix("a.b.example.local", null);
     }
     
     @Test public void single() { // TLD with only 1 rule.
-        assertPublicSuffix("biz", null);
-        assertPublicSuffix("domain.biz", "domain.biz");
-        assertPublicSuffix("b.domain.biz", "domain.biz");
-        assertPublicSuffix("a.b.domain.biz", "domain.biz");
+        checkPublicSuffix("biz", null);
+        checkPublicSuffix("domain.biz", "domain.biz");
+        checkPublicSuffix("b.domain.biz", "domain.biz");
+        checkPublicSuffix("a.b.domain.biz", "domain.biz");
     }
     
     @Test public void tiers() { // TLD with some 2-level rules.
-        assertPublicSuffix("com", null);
-        assertPublicSuffix("example.com", "example.com");
-        assertPublicSuffix("b.example.com", "example.com");
-        assertPublicSuffix("a.b.example.com", "example.com");
-        assertPublicSuffix("uk.com", null);
-        assertPublicSuffix("example.uk.com", "example.uk.com");
-        assertPublicSuffix("b.example.uk.com", "example.uk.com");
-        assertPublicSuffix("a.b.example.uk.com", "example.uk.com");
-        assertPublicSuffix("test.ac", "test.ac");
+        checkPublicSuffix("com", null);
+        checkPublicSuffix("example.com", "example.com");
+        checkPublicSuffix("b.example.com", "example.com");
+        checkPublicSuffix("a.b.example.com", "example.com");
+//        checkPublicSuffix("uk.com", null); // subleased record, can actually be registered
+        checkPublicSuffix("example.uk.com", "example.uk.com");
+        checkPublicSuffix("b.example.uk.com", "example.uk.com");
+        checkPublicSuffix("a.b.example.uk.com", "example.uk.com");
+        checkPublicSuffix("test.ac", "test.ac");
     }
     
     @Test public void wildcard() { // TLD with only 1 (wildcard) rule.
-        assertPublicSuffix("cy", null);
-        assertPublicSuffix("c.cy", null);
-        assertPublicSuffix("b.c.cy", "b.c.cy");
-        assertPublicSuffix("a.b.c.cy", "b.c.cy");
+        checkPublicSuffix("cy", null);
+        checkPublicSuffix("c.cy", null);
+        checkPublicSuffix("b.c.cy", "b.c.cy");
+        checkPublicSuffix("a.b.c.cy", "b.c.cy");
     }
     
     @Test public void complex() { // More complex TLD.
-        assertPublicSuffix("jp", null);
-        assertPublicSuffix("test.jp", "test.jp");
-        assertPublicSuffix("www.test.jp", "test.jp");
-        assertPublicSuffix("ac.jp", null);
-        assertPublicSuffix("test.ac.jp", "test.ac.jp");
-        assertPublicSuffix("www.test.ac.jp", "test.ac.jp");
-        assertPublicSuffix("kyoto.jp", null);
-        assertPublicSuffix("c.kyoto.jp", null);
-        assertPublicSuffix("b.c.kyoto.jp", "b.c.kyoto.jp");
-        assertPublicSuffix("a.b.c.kyoto.jp", "b.c.kyoto.jp");
-        assertPublicSuffix("pref.kyoto.jp", "pref.kyoto.jp");   // Exception rule.
-        assertPublicSuffix("www.pref.kyoto.jp", "pref.kyoto.jp");   // Exception rule.
-        assertPublicSuffix("city.kyoto.jp", "city.kyoto.jp");   // Exception rule.
-        assertPublicSuffix("www.city.kyoto.jp", "city.kyoto.jp");   // Exception rule.
+        
+        checkPublicSuffix("jp", null);
+        checkPublicSuffix("test.jp", "test.jp");
+        checkPublicSuffix("www.test.jp", "test.jp");
+        checkPublicSuffix("ac.jp", null);
+        checkPublicSuffix("test.ac.jp", "test.ac.jp");
+        checkPublicSuffix("www.test.ac.jp", "test.ac.jp");
+        checkPublicSuffix("kyoto.jp", null);
+        checkPublicSuffix("test.kyoto.jp", "test.kyoto.jp");
+        checkPublicSuffix("ide.kyoto.jp", null);
+        checkPublicSuffix("b.ide.kyoto.jp", "b.ide.kyoto.jp");
+        checkPublicSuffix("a.b.ide.kyoto.jp", "b.ide.kyoto.jp");
+        checkPublicSuffix("c.kobe.jp", null);
+        checkPublicSuffix("b.c.kobe.jp", "b.c.kobe.jp");
+        checkPublicSuffix("a.b.c.kobe.jp", "b.c.kobe.jp");
+        checkPublicSuffix("city.kobe.jp", "city.kobe.jp");
+        checkPublicSuffix("www.city.kobe.jp", "city.kobe.jp");
     }
     
     @Test public void exceptions() { // TLD with a wildcard rule and exceptions.
-        assertPublicSuffix("om", null);
-        assertPublicSuffix("test.om", null);
-        assertPublicSuffix("b.test.om", "b.test.om");
-        assertPublicSuffix("a.b.test.om", "b.test.om");
-        assertPublicSuffix("songfest.om", "songfest.om");
-        assertPublicSuffix("www.songfest.om", "songfest.om");
+        checkPublicSuffix("om", null);
+        checkPublicSuffix("test.om", null);
+        checkPublicSuffix("b.test.om", "b.test.om");
+        checkPublicSuffix("a.b.test.om", "b.test.om");
+        checkPublicSuffix("songfest.om", "songfest.om");
+        checkPublicSuffix("www.songfest.om", "songfest.om");
     }
     
     @Test public void usk12() { // US K12.
-        assertPublicSuffix("us", null);
-        assertPublicSuffix("test.us", "test.us");
-        assertPublicSuffix("www.test.us", "test.us");
-        assertPublicSuffix("ak.us", null);
-        assertPublicSuffix("test.ak.us", "test.ak.us");
-        assertPublicSuffix("www.test.ak.us", "test.ak.us");
-        assertPublicSuffix("k12.ak.us", null);
-        assertPublicSuffix("test.k12.ak.us", "test.k12.ak.us");
-        assertPublicSuffix("www.test.k12.ak.us", "test.k12.ak.us");
+        checkPublicSuffix("us", null);
+        checkPublicSuffix("test.us", "test.us");
+        checkPublicSuffix("www.test.us", "test.us");
+        checkPublicSuffix("ak.us", null);
+        checkPublicSuffix("test.ak.us", "test.ak.us");
+        checkPublicSuffix("www.test.ak.us", "test.ak.us");
+        checkPublicSuffix("k12.ak.us", null);
+        checkPublicSuffix("test.k12.ak.us", "test.k12.ak.us");
+        checkPublicSuffix("www.test.k12.ak.us", "test.k12.ak.us");
     }
 
-    static void assertPublicSuffix(String name, String entry) {
+    static void checkPublicSuffix(String name, String entry) {
         boolean isPassed = false;
         try {
-            Domain domain = new Domain(name);
-            boolean isNull = entry == null && domain.getRecord() == null;
-            boolean isEqual = entry != null && domain.getRecord() != null && entry.equals(domain.getRecord().getEntry());
+            Record record = new Domain(name).getRecord();
+            boolean isNull = entry == null && record == null;
+            boolean isEqual = entry != null && record != null && entry.equals(record.getEntry());
             isPassed = isNull || isEqual;
             if (!isPassed) {
-                System.out.println("Fail! " + name + " => " + domain.getRecord().getEntry() + " = " + entry);
+                System.out.println("Fail! " + name + " => " + record.getEntry() + " != " + entry);
             }
         } catch (MalformedDomain e) {
             isPassed = entry == null;
@@ -112,6 +117,6 @@ public class DomainTest {
                 System.out.println("Fail! " + e.getMessage() + " (" + e.getDomain() + ")");                
             }
         }
-        assert(isPassed);
+        Assert.assertTrue(isPassed);
     }
 }

@@ -25,7 +25,7 @@ public class Record {
 
     private String entry;
     private String suffix;
-    private String pattern;
+    private String rule;
 
     public String getEntry() {
         return entry;
@@ -43,18 +43,18 @@ public class Record {
         this.suffix = suffix;
     }
 
-    public String getPattern() {
-        return pattern;
+    public String getRule() {
+        return rule;
     }
 
-    public void setPattern(String pattern) {
-        this.pattern = pattern;
+    public void setRule(String rule) {
+        this.rule = rule;
     }
 
     @Override
     public String toString() {
         return "{ entry => " + entry + ", suffix => " + suffix
-                + ", pattern => " + pattern + " }";
+                + ", rule => " + rule + " }";
     }
     
 }
