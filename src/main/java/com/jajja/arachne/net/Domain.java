@@ -357,7 +357,7 @@ public class Domain extends Host {
             List<Rule> rules = null;
             try {
                 log.info("Trying file resource for " + file);
-                rules = read(new FileInputStream(new File("/var/lib/bruichladdich" + file)));
+                rules = read(new FileInputStream(new File("/usr/share/arachne" + file)));
             } catch (Exception e) {
                 log.info("Trying class path resource for effective TLD names " + file);
                 rules = read(Rule.class.getResourceAsStream(file));

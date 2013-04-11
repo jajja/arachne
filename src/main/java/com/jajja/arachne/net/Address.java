@@ -122,7 +122,64 @@ public class Address extends Host {
     }
 
     private static void parseIpv4(String address) throws MalformedAddress {
-        throw new MalformedAddress(address, "Not implemented!"); // XXX: implement
+        int mask = 0;
+        int subnet = 'a';
+        int digits = 0;
+        for (char c : address.toCharArray()) {
+            switch (c) {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                if (0 < digits && mask == 0)
+                    throw new MalformedAddress(address, "Zero-padded IPv4 address subnet!");  
+                mask *= 10;
+                mask += (int) c - 48;
+                digits++;
+                if (255 < mask)
+                    throw new MalformedAddress(address, "An IPv4 subnet (i.e. the " + (char) subnet + "-net) can not exceed 255!");  
+                break;
+            case '.':
+                if ('d' < subnet)
+                    throw new MalformedAddress(address, "Too many subnets for an IPv4 address!");  
+                if (digits == 0)
+                    throw new MalformedAddress(address, "Empty IPv4 address " + (char) subnet + "-net!");  
+                if (subnet == 'a' && mask == 0) 
+                    throw new MalformedAddress(address, "Zero-leading IPv4 address a-net!");  
+                subnet++;
+                digits = 0;
+                mask = 0;
+                break;
+            default:
+                throw new MalformedAddress(address, "Illegal characters for an IPv4 address!");
+            }
+        }
+    }
+    
+    public static void main(String[] args) {
+        String[] addresses = new String[] {
+                "127.0.0.1",
+                ".127.0.0.1",
+                "127..0.1",
+                "127.01.0.1",
+                "127.0.0.0.1",
+                "127.256.0.1",
+                "0.0.0.1",
+        };
+        for (String address : addresses) {
+            try {
+                parseIpv4(address);
+                System.out.println(address + ":success!");
+            } catch (MalformedAddress e) {
+                System.out.println(e.getAddress() + ":" + e.getMessage());
+            }
+        }
     }
     
     private static void parseIpv6(String address) throws MalformedAddress {
