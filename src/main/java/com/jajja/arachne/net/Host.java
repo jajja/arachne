@@ -43,13 +43,9 @@ public abstract class Host {
      *             legal domain.
      */
     public static Host get(String name) throws MalformedDomain {
-        if (Address.isAddress(name)) {
-            try {
-                return new Address(name);
-            } catch (MalformedAddress e) {
-                throw new IllegalStateException("Call pest control, there is a bug!", e); // cannot happen?!
-            }
-        } else {
+        try {
+            return new Address(name);
+        } catch (MalformedAddress e) {
             return new Domain(name);
         }
     }
