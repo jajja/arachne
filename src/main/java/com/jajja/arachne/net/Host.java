@@ -24,8 +24,6 @@ package com.jajja.arachne.net;
 import com.jajja.arachne.exceptions.MalformedAddress;
 import com.jajja.arachne.exceptions.MalformedDomain;
 
-import static com.jajja.arachne.net.Address.*;
-
 /**
  * An abstract Internet host, which can be either an Address or a Domain, as
  * entities regulated by ICANN.
@@ -45,29 +43,35 @@ public abstract class Host {
      *             legal domain.
      */
     public static Host get(String name) throws MalformedDomain {
-        Host host = null;
-        if (isAddress(name)) {
+        if (Address.isAddress(name)) {
             try {
                 return new Address(name);
             } catch (MalformedAddress e) {
                 throw new IllegalStateException("Call pest control, there is a bug!", e); // cannot happen?!
             }
+        } else {
+            return new Domain(name);
         }
-        return host != null ? host : new Domain(name);
     }
 
     /**
-     * Tells whether a host name is an address or not.
+     * Tells whether the host is an address or not.
      * 
-     * @param name
-     *            the host name
-     * @return true if the host name corresponds to either an IPv4 or an IPv6
-     *         address, false otherwise
+     * @return true if the host is instance of an address, false otherwise
      */
-    public static boolean isAddress(String name) {
-        return isIpv4(name) || isIpv6(name);
+    public boolean isAddress() {
+        return this instanceof Address;
     }
-
+    
+    /**
+     * Tells whether the host is a domain or not.
+     * 
+     * @return true if the host is instance of a domain, false otherwise
+     */
+    public boolean isDomain() {
+        return this instanceof Domain;
+    }
+    
     private String name;
     
     Host(String name) {

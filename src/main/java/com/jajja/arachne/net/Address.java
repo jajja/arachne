@@ -73,7 +73,12 @@ public class Address extends Host {
      *         otherwise
      */
     public static boolean isIpv4(String name) {
-        return false; // TODO: implement
+        try {
+            parseIpv4(name);
+            return true;
+        } catch (MalformedAddress malformedAdress) {
+            return false;
+        }
     }
     
     /**
@@ -85,10 +90,43 @@ public class Address extends Host {
      *         otherwise
      */
     public static boolean isIpv6(String name) {
-        return false; // TODO: implement
+        try {
+            parseIpv6(name);
+            return true;
+        } catch (MalformedAddress malformedAdress) {
+            return false;
+        }
+    }
+
+    /**
+     * Tells whether a host name is an address or not.
+     * 
+     * @param name
+     *            the host name
+     * @return true if the host name corresponds to either an IPv4 or an IPv6
+     *         address, false otherwise
+     */
+    public static boolean isAddress(String name) {
+        return isIpv4(name) || isIpv6(name);
     }
     
     private void parse() throws MalformedAddress {
-        // TODO: implement
+        String address = getName();
+        if (0 < getName().indexOf(".")) {
+            parseIpv4(address);
+        } else if (0 < getName().indexOf(":")) {
+            parseIpv6(address);
+        } else {
+            throw new MalformedAddress(address, "Not an address!");
+        }
     }
+
+    private static void parseIpv4(String address) throws MalformedAddress {
+        throw new MalformedAddress(address, "Not implemented!"); // XXX: implement
+    }
+    
+    private static void parseIpv6(String address) throws MalformedAddress {
+        throw new MalformedAddress(address, "Not implemented!"); // XXX: implement        
+    }
+    
 }
