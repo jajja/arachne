@@ -25,4 +25,49 @@ public class AddressTest {
         }   
     }
     
+    @Test public void leadingZeroIpv4() { // Leading zero IPv4
+        try {
+            Address.parseIpv4("0.0.0.1");
+            Assert.assertTrue(false);
+        } catch (MalformedAddress e) {
+            System.out.println("Leading zero ipv4 (" + e.getAddress() + "): " + e.getMessage());
+        }   
+    }
+    
+    @Test public void leadingDotIpv4() { // Leading dot IPv4
+        try {
+            Address.parseIpv4(".127.0.0.1");
+            Assert.assertTrue(false);
+        } catch (MalformedAddress e) {
+            System.out.println("Leading dot ipv4 (" + e.getAddress() + "): " + e.getMessage());
+        }   
+    }
+    
+    @Test public void emptySubNetIpv4() { // Empty sub-net IPv4
+        try {
+            Address.parseIpv4("127..0.1");
+            Assert.assertTrue(false);
+        } catch (MalformedAddress e) {
+            System.out.println("Empty sub-net ipv4 (" + e.getAddress() + "): " + e.getMessage());
+        }   
+    }
+    
+    @Test public void paddedSubNetIpv4() { // Padded sub-net IPv4
+        try {
+            Address.parseIpv4("127.01.0.1");
+            Assert.assertTrue(false);
+        } catch (MalformedAddress e) {
+            System.out.println("Padded sub-net ipv4 (" + e.getAddress() + "): " + e.getMessage());
+        }   
+    }
+    
+    @Test public void largeSubNetIpv4() { // Large sub-net IPv4
+        try {
+            Address.parseIpv4("127.0.0.256");
+            Assert.assertTrue(false);
+        } catch (MalformedAddress e) {
+            System.out.println("Large sub-net ipv4 (" + e.getAddress() + "): " + e.getMessage());
+        }   
+    }
+    
 }
