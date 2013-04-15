@@ -46,7 +46,11 @@ public class Endpoint {
     }
     
     public int getPort() {
-        return port != null ? port : defaultPort;
+        return isDefaultPort() ? defaultPort : port;
+    }
+    
+    public boolean isDefaultPort() {
+        return port == null;
     }
     
     private void parse() throws MalformedException {
@@ -58,7 +62,7 @@ public class Endpoint {
             if (bracket != colon - 1)
                 throw new MalformedException("Expected colon after IPv6 host-part! " + string);
             if (-1 < string.indexOf('.'))
-                throw new MalformedException("Non IPv6 content escaped by brackets! " + string);  
+                throw new MalformedException("Detected escape brackets for non IPv6 host! " + string);  
             host = Host.get(string.substring(1, bracket));
         } else if (-1 < colon) {
             host = Host.get(string.substring(0, colon));

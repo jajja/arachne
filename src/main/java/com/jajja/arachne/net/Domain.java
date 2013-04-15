@@ -198,19 +198,19 @@ public class Domain extends Host {
     }
     
     private void parse() throws MalformedDomainException {
-        fqdn = getName().toLowerCase();
+        fqdn = getString().toLowerCase();
         if (fqdn.isEmpty())
-            throw new MalformedDomainException(getName(), "Empty domain!");            
+            throw new MalformedDomainException(getString(), "Empty domain!");            
         labels = fqdn.split("\\."); // TODO: implement proper string split for performance
         if (253 < fqdn.length()) 
-            throw new MalformedDomainException(getName(), "Too many characters in fully qualified domain name!");
+            throw new MalformedDomainException(getString(), "Too many characters in fully qualified domain name!");
         if (127 < labels.length) 
-            throw new MalformedDomainException(getName(), "Too many labels in fully qualified domain name!");            
+            throw new MalformedDomainException(getString(), "Too many labels in fully qualified domain name!");            
         for (String label : labels) {
             if (63 < label.length()) 
-                throw new MalformedDomainException(getName(), "Too many characters in domain name!");
+                throw new MalformedDomainException(getString(), "Too many characters in domain name!");
             if (!label.matches("[0-9a-z-]+")) // TODO: compile this statically or search manually for performance
-                throw new MalformedDomainException(getName(), "Invalid charcters in domain name!");
+                throw new MalformedDomainException(getString(), "Invalid charcters in domain name!");
         }
         tld = labels[labels.length - 1];            
         if (1 < labels.length) {

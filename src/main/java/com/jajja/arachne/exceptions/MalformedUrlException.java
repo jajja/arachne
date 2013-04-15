@@ -25,12 +25,20 @@ public class MalformedUrlException extends MalformedException {
 
     private static final long serialVersionUID = -1L;
     
-    public MalformedUrlException(String message) {
+    private String url;
+    
+    public MalformedUrlException(String url, String message) {
         super(message);
+        this.url = url;
     }
     
-    public MalformedUrlException(String message, Throwable cause) {
+    public MalformedUrlException(String url, String message, Throwable cause) {
         super(message, cause);
+        this.url = url;
+    }
+    
+    public String getUrl() {
+        return url;
     }
 
 }

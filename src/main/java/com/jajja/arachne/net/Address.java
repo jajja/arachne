@@ -35,15 +35,15 @@ public class Address extends Host {
     private int ipv;   
     
     /**
-     * Creates an address by parsing the name.
+     * Creates an address by parsing the string representation, the string literal.
      * 
-     * @param name
-     *            the domain name
+     * @param string
+     *            the string representation
      * @throws MalformedAddressException
      *             when the address name can not be parsed as an address
      */
-    public Address(String name) throws MalformedAddressException {
-        super(name);
+    public Address(String string) throws MalformedAddressException {
+        super(string);
         parse();
     }
     
@@ -157,23 +157,22 @@ public class Address extends Host {
     }
     
     private void parse() throws MalformedAddressException {
-        String address = getName();
-        if (-1 < getName().indexOf(".")) {
+        if (-1 < getString().indexOf(".")) {
             parseIpv4();
-        } else if (-1 < getName().indexOf(":")) {
+        } else if (-1 < getString().indexOf(":")) {
             parseIpv6();
         } else {
-            throw new MalformedAddressException(address, "Not an address!");
+            throw new MalformedAddressException(getString(), "Not an address!");
         }
     }
 
     private Address parseIpv4() throws MalformedAddressException {
-        String address = getName();
+        String string = getString();
         StringBuilder hex = new StringBuilder(); 
         int mask = 0;
         int subnet = 'a';
         int digits = 0;
-        for (char c : address.toCharArray()) {          
+        for (char c : string.toCharArray()) {          
             switch (c) {
             case '0':
             case '1':
@@ -186,27 +185,27 @@ public class Address extends Host {
             case '8':
             case '9':
                 if (0 < digits && mask == 0)
-                    throw new MalformedAddressException(address, "Zero-padded IPv4 address subnet!");  
+                    throw new MalformedAddressException(string, "Zero-padded IPv4 address subnet!");  
                 mask *= 10;
                 mask += (int) c - 48;
                 digits++;
                 if (255 < mask)
-                    throw new MalformedAddressException(address, "An IPv4 subnet (i.e. the " + (char) subnet + "-net) can not exceed 255!");  
+                    throw new MalformedAddressException(string, "An IPv4 subnet (i.e. the " + (char) subnet + "-net) can not exceed 255!");  
                 break;
             case '.':
                 if ('c' < subnet)
-                    throw new MalformedAddressException(address, "Too many subnets for an IPv4 address!");  
+                    throw new MalformedAddressException(string, "Too many subnets for an IPv4 address!");  
                 if (digits == 0)
-                    throw new MalformedAddressException(address, "Empty IPv4 address " + (char) subnet + "-net!");  
+                    throw new MalformedAddressException(string, "Empty IPv4 address " + (char) subnet + "-net!");  
                 if (subnet == 'a' && mask == 0) 
-                    throw new MalformedAddressException(address, "Zero-leading IPv4 address a-net!");  
+                    throw new MalformedAddressException(string, "Zero-leading IPv4 address a-net!");  
                 hex.append(String.format("%02x", mask));
                 subnet++;
                 digits = 0;
                 mask = 0;
                 break;
             default:
-                throw new MalformedAddressException(address, "Illegal characters for an IPv4 address!");
+                throw new MalformedAddressException(string, "Illegal characters for an IPv4 address!");
             }
         }
         hex.append(String.format("%02x", mask));
@@ -216,7 +215,7 @@ public class Address extends Host {
     }
     
     private Address parseIpv6() throws MalformedAddressException {
-        String address = getName();
+        String string = getString();
         StringBuilder suffhex = new StringBuilder(); 
         StringBuilder prefhex = new StringBuilder(); 
         StringBuilder comment = new StringBuilder(); 
@@ -224,7 +223,7 @@ public class Address extends Host {
         char d = 0;
         boolean isPadded = false;
         boolean isComment = false;
-        for (char c : getName().toCharArray()) {   
+        for (char c : getString().toCharArray()) {   
             if (isComment) {
                 comment.append(c);
             } else {
@@ -251,7 +250,7 @@ public class Address extends Host {
                 case ':':
                     if (d == ':') {
                         if (isPadded) 
-                            throw new MalformedAddressException(address, "IPv6 adress can only be zero-padded at one point!");
+                            throw new MalformedAddressException(string, "IPv6 adress can only be zero-padded at one point!");
                         isPadded = true;
                     } else {
                         if (isPadded) {
@@ -266,7 +265,7 @@ public class Address extends Host {
                     isComment = true;
                     break;
                 default:
-                    throw new MalformedAddressException(address, "Illegal characters for an IPv4 address!");
+                    throw new MalformedAddressException(string, "Illegal characters for an IPv4 address!");
                 }
                 d = c; // step!
             }
@@ -278,7 +277,7 @@ public class Address extends Host {
         }
         int padding = 32 - (prefhex.length() + suffhex.length());
         if (padding < 0)
-            throw  new MalformedAddressException(address, "Too large data for an IPv6 adress!");
+            throw  new MalformedAddressException(string, "Too large data for an IPv6 adress!");
         hex = String.format("%s%0" + padding  + "x%s", prefhex, 0, suffhex);
         if (0 < comment.length()) {
             this.comment = comment.toString();            
@@ -290,30 +289,6 @@ public class Address extends Host {
     @Override
     public String toString() {
         return "{ hex => " + hex + ", ipv => " + ipv + ", comment => " + comment + " }";
-    }
-    
-    public static void main(String[] args) { // TODO: create unit tests instead
-        String[] names = new String[] {
-                "127.0.0.1",
-                "213.66.58.72",
-                ".127.0.0.1",
-                "127.0.0.1.",
-                "127..0.1",
-                "127.01.0.1",
-                "127.0.0.0.1",
-                "127.256.0.1",
-                "0.127.0.1",
-                "::1",
-                "fe80::1%lo0",
-                "2605:2700:0:3::4713:93e3",
-        };
-        for (String name : names) {
-            try {
-                System.out.println(new Address(name));
-            } catch (MalformedAddressException e) {
-                System.out.println(e.getAddress() + "\t: " + e.getMessage());
-            }
-        }
     }
     
 }

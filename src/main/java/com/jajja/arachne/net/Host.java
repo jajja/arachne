@@ -68,19 +68,19 @@ public abstract class Host {
         return this instanceof Domain;
     }
     
-    private String name;
+    private String string;
     
-    Host(String name) {
-        this.name = name;
+    Host(String string) {
+        this.string = string;
     }
     
     /**
-     * Provides the host name.
+     * Provides the string representation of the host, the hostname.
      * 
-     * @return the name of the host
+     * @return the string representation
      */
-    public String getName() {
-        return name;
+    public String getString() {
+        return string;
     }
 
 }
