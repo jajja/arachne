@@ -21,16 +21,24 @@
  */
 package com.jajja.arachne.exceptions;
 
-public class MalformedUrl extends Malformed {
+public class MalformedDomainException extends MalformedException {
 
-    private static final long serialVersionUID = -1L;
+    private static final long serialVersionUID = -1;
     
-    public MalformedUrl(String message) {
+    private String domain;
+    
+    public MalformedDomainException(String domain, String message) {
         super(message);
+        this.domain = domain;
     }
     
-    public MalformedUrl(String message, Throwable cause) {
+    public MalformedDomainException(String domain, String message, Throwable cause) {
         super(message, cause);
+        this.domain = domain;
+    }
+    
+    public String getDomain() {
+        return domain;
     }
 
 }

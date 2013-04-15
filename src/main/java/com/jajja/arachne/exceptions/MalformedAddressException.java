@@ -21,16 +21,24 @@
  */
 package com.jajja.arachne.exceptions;
 
-public class Malformed extends Exception {
+public class MalformedAddressException extends MalformedException {
 
-    private static final long serialVersionUID = -1L;
+    private static final long serialVersionUID = -1;
     
-    public Malformed(String message) {
+    private String address;
+    
+    public MalformedAddressException(String address, String message) {
         super(message);
+        this.address = address;
     }
     
-    public Malformed(String message, Throwable cause) {
+    public MalformedAddressException(String address, String message, Throwable cause) {
         super(message, cause);
+        this.address = address;
+    }
+    
+    public String getAddress() {
+        return address;
     }
 
 }
