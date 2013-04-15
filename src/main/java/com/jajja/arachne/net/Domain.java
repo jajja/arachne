@@ -38,7 +38,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.jajja.arachne.exceptions.MalformedDomain;
+import com.jajja.arachne.exceptions.MalformedDomainException;
 
 /**
  * A class for parsing Internet domains and matching public suffix records. The
@@ -76,10 +76,10 @@ public class Domain extends Host {
      * 
      * @param name
      *            the domain name
-     * @throws MalformedDomain
+     * @throws MalformedDomainException
      *             when the domain name can not be parsed as a domain
      */
-    public Domain(String name) throws MalformedDomain {
+    public Domain(String name) throws MalformedDomainException {
         super(IDN.toASCII(name));
         parse();
         match();
@@ -197,20 +197,20 @@ public class Domain extends Host {
         return subleasedRecord != null;
     }
     
-    private void parse() throws MalformedDomain {
+    private void parse() throws MalformedDomainException {
         fqdn = getName().toLowerCase();
         if (fqdn.isEmpty())
-            throw new MalformedDomain(getName(), "Empty domain!");            
+            throw new MalformedDomainException(getName(), "Empty domain!");            
         labels = fqdn.split("\\."); // TODO: implement proper string split for performance
         if (253 < fqdn.length()) 
-            throw new MalformedDomain(getName(), "Too many characters in fully qualified domain name!");
+            throw new MalformedDomainException(getName(), "Too many characters in fully qualified domain name!");
         if (127 < labels.length) 
-            throw new MalformedDomain(getName(), "Too many labels in fully qualified domain name!");            
+            throw new MalformedDomainException(getName(), "Too many labels in fully qualified domain name!");            
         for (String label : labels) {
             if (63 < label.length()) 
-                throw new MalformedDomain(getName(), "Too many characters in domain name!");
+                throw new MalformedDomainException(getName(), "Too many characters in domain name!");
             if (!label.matches("[0-9a-z-]+")) // TODO: compile this statically or search manually for performance
-                throw new MalformedDomain(getName(), "Invalid charcters in domain name!");
+                throw new MalformedDomainException(getName(), "Invalid charcters in domain name!");
         }
         tld = labels[labels.length - 1];            
         if (1 < labels.length) {
@@ -264,7 +264,7 @@ public class Domain extends Host {
             System.out.println(new Domain("pEaT.sE"));
             System.out.println(new Domain("peat.local"));
             System.out.println(new Domain("local"));
-        } catch (MalformedDomain e) {
+        } catch (MalformedDomainException e) {
             e.printStackTrace();
         }
     }

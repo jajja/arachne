@@ -1,7 +1,7 @@
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.jajja.arachne.exceptions.MalformedDomain;
+import com.jajja.arachne.exceptions.MalformedDomainException;
 import com.jajja.arachne.net.Domain;
 import com.jajja.arachne.net.Record;
 
@@ -111,7 +111,7 @@ public class DomainTest {
             if (!isPassed) {
                 System.out.println("Fail! " + name + " => " + record.getEntry() + " != " + entry);
             }
-        } catch (MalformedDomain e) {
+        } catch (MalformedDomainException e) {
             isPassed = entry == null;
             if (!isPassed) {
                 System.out.println("Fail! " + e.getMessage() + " (" + e.getDomain() + ")");                

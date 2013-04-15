@@ -1,7 +1,7 @@
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.jajja.arachne.exceptions.MalformedAddress;
+import com.jajja.arachne.exceptions.MalformedAddressException;
 import com.jajja.arachne.net.Address;
 
 public class AddressTest {
@@ -10,7 +10,8 @@ public class AddressTest {
         try {
             Assert.assertEquals(Address.parseIpv4("127.0.0.1"), new Address("127.0.0.1").getHex());
             Assert.assertEquals(Address.parseIpv4("213.66.58.72"), new Address("213.66.58.72").getHex());
-        } catch (MalformedAddress e) {
+            Assert.assertEquals(Address.parseIpv4("0.0.0.1"), new Address("127.0.0.1").getHex());
+        } catch (MalformedAddressException e) {
             Assert.assertTrue(false);
         }   
     }
@@ -20,25 +21,17 @@ public class AddressTest {
             Assert.assertEquals(Address.parseIpv6("::1"), new Address("::1").getHex());
             Assert.assertEquals(Address.parseIpv6("fe80::1%lo0"), new Address("fe80::1%lo0").getHex());
             Assert.assertEquals(Address.parseIpv6("2605:2700:0:3::4713:93e3"), new Address("2605:2700:0:3::4713:93e3").getHex());
-        } catch (MalformedAddress e) {
+        } catch (MalformedAddressException e) {
             Assert.assertTrue(false);
         }   
     }
-    
-    @Test public void leadingZeroIpv4() { // Leading zero IPv4
-        try {
-            Address.parseIpv4("0.0.0.1");
-            Assert.assertTrue(false);
-        } catch (MalformedAddress e) {
-            System.out.println("Leading zero ipv4 (" + e.getAddress() + "): " + e.getMessage());
-        }   
-    }
+
     
     @Test public void leadingDotIpv4() { // Leading dot IPv4
         try {
             Address.parseIpv4(".127.0.0.1");
             Assert.assertTrue(false);
-        } catch (MalformedAddress e) {
+        } catch (MalformedAddressException e) {
             System.out.println("Leading dot ipv4 (" + e.getAddress() + "): " + e.getMessage());
         }   
     }
@@ -47,7 +40,7 @@ public class AddressTest {
         try {
             Address.parseIpv4("127..0.1");
             Assert.assertTrue(false);
-        } catch (MalformedAddress e) {
+        } catch (MalformedAddressException e) {
             System.out.println("Empty sub-net ipv4 (" + e.getAddress() + "): " + e.getMessage());
         }   
     }
@@ -56,7 +49,7 @@ public class AddressTest {
         try {
             Address.parseIpv4("127.01.0.1");
             Assert.assertTrue(false);
-        } catch (MalformedAddress e) {
+        } catch (MalformedAddressException e) {
             System.out.println("Padded sub-net ipv4 (" + e.getAddress() + "): " + e.getMessage());
         }   
     }
@@ -65,7 +58,7 @@ public class AddressTest {
         try {
             Address.parseIpv4("127.0.0.256");
             Assert.assertTrue(false);
-        } catch (MalformedAddress e) {
+        } catch (MalformedAddressException e) {
             System.out.println("Large sub-net ipv4 (" + e.getAddress() + "): " + e.getMessage());
         }   
     }

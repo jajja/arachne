@@ -21,8 +21,8 @@
  */
 package com.jajja.arachne.net;
 
-import com.jajja.arachne.exceptions.MalformedAddress;
-import com.jajja.arachne.exceptions.MalformedDomain;
+import com.jajja.arachne.exceptions.MalformedAddressException;
+import com.jajja.arachne.exceptions.MalformedDomainException;
 
 /**
  * An abstract Internet host, which can be either an Address or a Domain, as
@@ -38,14 +38,14 @@ public abstract class Host {
      * @param name
      *            the host name
      * @return the host represented by either an address or a domain
-     * @throws MalformedDomain
+     * @throws MalformedDomainException
      *             when the name can not be resolved as an address and is not a
      *             legal domain.
      */
-    public static Host get(String name) throws MalformedDomain {
+    public static Host get(String name) throws MalformedDomainException {
         try {
             return new Address(name);
-        } catch (MalformedAddress e) {
+        } catch (MalformedAddressException e) {
             return new Domain(name);
         }
     }

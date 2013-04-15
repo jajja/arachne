@@ -21,7 +21,7 @@
  */
 package com.jajja.arachne.net;
 
-import com.jajja.arachne.exceptions.MalformedAddress;
+import com.jajja.arachne.exceptions.MalformedAddressException;
 
 /**
  * A class for parsing Internet addresses.
@@ -39,10 +39,10 @@ public class Address extends Host {
      * 
      * @param name
      *            the domain name
-     * @throws MalformedAddress
+     * @throws MalformedAddressException
      *             when the address name can not be parsed as an address
      */
-    public Address(String name) throws MalformedAddress {
+    public Address(String name) throws MalformedAddressException {
         super(name);
         parse();
     }
@@ -96,7 +96,7 @@ public class Address extends Host {
         try {
             parseIpv4(name);
             return true;
-        } catch (MalformedAddress malformedAdress) {
+        } catch (MalformedAddressException malformedAdress) {
             return false;
         }
     }
@@ -113,7 +113,7 @@ public class Address extends Host {
         try {
             parseIpv6(name);
             return true;
-        } catch (MalformedAddress malformedAdress) {
+        } catch (MalformedAddressException malformedAdress) {
             return false;
         }
     }
@@ -124,10 +124,10 @@ public class Address extends Host {
      * @param name
      *            the host name representing an IPv4 address
      * @return the hexadecimal representation
-     * @throws MalformedAddress
+     * @throws MalformedAddressException
      *             when an IPv4 address cannot be parsed by the given host name
      */
-    public static String parseIpv4(String name) throws MalformedAddress {
+    public static String parseIpv4(String name) throws MalformedAddressException {
         return new Address(name).parseIpv4().hex;
     }
     
@@ -137,10 +137,10 @@ public class Address extends Host {
      * @param name
      *            the host name representing an IPv6 address
      * @return the hexadecimal representation
-     * @throws MalformedAddress
+     * @throws MalformedAddressException
      *             when an IPv6 address cannot be parsed by the given host name
      */
-    public static String parseIpv6(String name) throws MalformedAddress {
+    public static String parseIpv6(String name) throws MalformedAddressException {
          return new Address(name).parseIpv6().hex;
     }
 
@@ -156,18 +156,18 @@ public class Address extends Host {
         return isIpv4(name) || isIpv6(name);
     }
     
-    private void parse() throws MalformedAddress {
+    private void parse() throws MalformedAddressException {
         String address = getName();
         if (-1 < getName().indexOf(".")) {
             parseIpv4();
         } else if (-1 < getName().indexOf(":")) {
             parseIpv6();
         } else {
-            throw new MalformedAddress(address, "Not an address!");
+            throw new MalformedAddressException(address, "Not an address!");
         }
     }
 
-    private Address parseIpv4() throws MalformedAddress {
+    private Address parseIpv4() throws MalformedAddressException {
         String address = getName();
         StringBuilder hex = new StringBuilder(); 
         int mask = 0;
@@ -186,27 +186,27 @@ public class Address extends Host {
             case '8':
             case '9':
                 if (0 < digits && mask == 0)
-                    throw new MalformedAddress(address, "Zero-padded IPv4 address subnet!");  
+                    throw new MalformedAddressException(address, "Zero-padded IPv4 address subnet!");  
                 mask *= 10;
                 mask += (int) c - 48;
                 digits++;
                 if (255 < mask)
-                    throw new MalformedAddress(address, "An IPv4 subnet (i.e. the " + (char) subnet + "-net) can not exceed 255!");  
+                    throw new MalformedAddressException(address, "An IPv4 subnet (i.e. the " + (char) subnet + "-net) can not exceed 255!");  
                 break;
             case '.':
                 if ('c' < subnet)
-                    throw new MalformedAddress(address, "Too many subnets for an IPv4 address!");  
+                    throw new MalformedAddressException(address, "Too many subnets for an IPv4 address!");  
                 if (digits == 0)
-                    throw new MalformedAddress(address, "Empty IPv4 address " + (char) subnet + "-net!");  
+                    throw new MalformedAddressException(address, "Empty IPv4 address " + (char) subnet + "-net!");  
                 if (subnet == 'a' && mask == 0) 
-                    throw new MalformedAddress(address, "Zero-leading IPv4 address a-net!");  
+                    throw new MalformedAddressException(address, "Zero-leading IPv4 address a-net!");  
                 hex.append(String.format("%02x", mask));
                 subnet++;
                 digits = 0;
                 mask = 0;
                 break;
             default:
-                throw new MalformedAddress(address, "Illegal characters for an IPv4 address!");
+                throw new MalformedAddressException(address, "Illegal characters for an IPv4 address!");
             }
         }
         hex.append(String.format("%02x", mask));
@@ -215,7 +215,7 @@ public class Address extends Host {
         return this;
     }
     
-    private Address parseIpv6() throws MalformedAddress {
+    private Address parseIpv6() throws MalformedAddressException {
         String address = getName();
         StringBuilder suffhex = new StringBuilder(); 
         StringBuilder prefhex = new StringBuilder(); 
@@ -251,7 +251,7 @@ public class Address extends Host {
                 case ':':
                     if (d == ':') {
                         if (isPadded) 
-                            throw new MalformedAddress(address, "IPv6 adress can only be zero-padded at one point!");
+                            throw new MalformedAddressException(address, "IPv6 adress can only be zero-padded at one point!");
                         isPadded = true;
                     } else {
                         if (isPadded) {
@@ -266,7 +266,7 @@ public class Address extends Host {
                     isComment = true;
                     break;
                 default:
-                    throw new MalformedAddress(address, "Illegal characters for an IPv4 address!");
+                    throw new MalformedAddressException(address, "Illegal characters for an IPv4 address!");
                 }
                 d = c; // step!
             }
@@ -278,7 +278,7 @@ public class Address extends Host {
         }
         int padding = 32 - (prefhex.length() + suffhex.length());
         if (padding < 0)
-            throw  new MalformedAddress(address, "Too large data for an IPv6 adress!");
+            throw  new MalformedAddressException(address, "Too large data for an IPv6 adress!");
         hex = String.format("%s%0" + padding  + "x%s", prefhex, 0, suffhex);
         if (0 < comment.length()) {
             this.comment = comment.toString();            
@@ -310,7 +310,7 @@ public class Address extends Host {
         for (String name : names) {
             try {
                 System.out.println(new Address(name));
-            } catch (MalformedAddress e) {
+            } catch (MalformedAddressException e) {
                 System.out.println(e.getAddress() + "\t: " + e.getMessage());
             }
         }
