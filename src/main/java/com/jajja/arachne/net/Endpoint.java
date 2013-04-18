@@ -21,7 +21,8 @@
  */
 package com.jajja.arachne.net;
 
-import com.jajja.arachne.exceptions.MalformedException;
+import com.jajja.arachne.exceptions.MalformedDomainException;
+import com.jajja.arachne.exceptions.MalformedUriException;
 
 // XXX: draft, might not make it to the release!
 public class Endpoint {
@@ -29,12 +30,14 @@ public class Endpoint {
     private String string;
     private Host host;
     private Integer port;
-    private int defaultPort;
     
-    public Endpoint(String string, int defaultPort) throws MalformedException {
+    public Endpoint(String string) throws MalformedUriException {
         this.string = string;
-        this.defaultPort = defaultPort;
-        parse();
+        try {            
+            parse();
+        } catch (MalformedDomainException e) {
+            throw new MalformedUriException(string, "Failed to parse host!", e);
+        }
     }
     
     public String getString() {
@@ -45,24 +48,24 @@ public class Endpoint {
         return host;
     }
     
-    public int getPort() {
-        return isDefaultPort() ? defaultPort : port;
+    public Integer getPort() {
+        return port;
     }
     
-    public boolean isDefaultPort() {
-        return port == null;
+    public void setPort(Integer port) {
+        this.port = port;
     }
     
-    private void parse() throws MalformedException {
+    private void parse() throws MalformedUriException, MalformedDomainException {
         int colon = string.lastIndexOf(':'); 
         if (string.charAt(0) == '[') {
             int bracket = string.indexOf(']');
             if (bracket < 0)
-                throw new MalformedException("Unmatched escape bracket in IPv6 endpoint! " + string);
+                throw new MalformedUriException(string, "Unmatched escape bracket in IPv6 endpoint!");
             if (bracket != colon - 1)
-                throw new MalformedException("Expected colon after IPv6 host-part! " + string);
+                throw new MalformedUriException(string, "Expected colon after IPv6 host-part!");
             if (-1 < string.indexOf('.'))
-                throw new MalformedException("Detected escape brackets for non IPv6 host! " + string);  
+                throw new MalformedUriException(string, "Detected escape brackets for non IPv6 host!");  
             host = Host.get(string.substring(1, bracket));
         } else if (-1 < colon) {
             host = Host.get(string.substring(0, colon));
@@ -73,16 +76,16 @@ public class Endpoint {
             try {
                 port = Integer.parseInt(string.substring(colon + 1));
             } catch (NumberFormatException e) {
-                throw new MalformedException("Invalid port number format! " + string);
+                throw new MalformedUriException(string, "Invalid port number format!");
             }
             if (port < 1 || 65535 < port)
-                throw new MalformedException("Port number out of range! " + string);            
+                throw new MalformedUriException(string, "Port number out of range!");            
         }
     }
 
     @Override
     public String toString() {
-        return "{ string => " + string + ", host => " + host + ", port => " + getPort() + " }";
+        return "{ string => " + string + ", host => " + host + ", port => " + port + " }";
     }
     
     public static void main(String[] args) {
@@ -96,7 +99,7 @@ public class Endpoint {
                 "[::1]:0",
                 "[::1]:lol",
         }) try {
-            System.out.println(new Endpoint(string, 80));
+            System.out.println(new Endpoint(string));
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }

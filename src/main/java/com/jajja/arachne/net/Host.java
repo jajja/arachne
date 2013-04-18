@@ -33,20 +33,21 @@ import com.jajja.arachne.exceptions.MalformedDomainException;
 public abstract class Host {
     
     /**
-     * Facilitates creation of a host according to the given host name.
+     * Facilitates creation of a host according to the given string
+     * representation of a host, such as hostname or address string literal.
      * 
-     * @param name
-     *            the host name
+     * @param string
+     *            the string representing a host
      * @return the host represented by either an address or a domain
      * @throws MalformedDomainException
      *             when the name can not be resolved as an address and is not a
      *             legal domain.
      */
-    public static Host get(String name) throws MalformedDomainException {
+    public static Host get(String string) throws MalformedDomainException {
         try {
-            return new Address(name);
+            return new Address(string);
         } catch (MalformedAddressException e) {
-            return new Domain(name);
+            return new Domain(string);
         }
     }
 

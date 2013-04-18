@@ -21,18 +21,18 @@
  */
 package com.jajja.arachne.exceptions;
 
-public class MalformedUrlException extends MalformedException {
+public class MalformedUriException extends MalformedException {
 
     private static final long serialVersionUID = -1L;
     
     private String url;
     
-    public MalformedUrlException(String url, String message) {
+    public MalformedUriException(String url, String message) {
         super(message);
         this.url = url;
     }
     
-    public MalformedUrlException(String url, String message, Throwable cause) {
+    public MalformedUriException(String url, String message, Throwable cause) {
         super(message, cause);
         this.url = url;
     }
