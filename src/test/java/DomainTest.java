@@ -119,4 +119,5 @@ public class DomainTest {
         }
         Assert.assertTrue(isPassed);
     }
+    
 }

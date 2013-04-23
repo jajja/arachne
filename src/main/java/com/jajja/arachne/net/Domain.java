@@ -69,6 +69,7 @@ public class Domain extends Host {
     private String sld;
     private Record registeredRecord;
     private Record subleasedRecord;
+    private String publicSuffix;
     
     /**
      * Creates a domain by parsing the name and matching records from the public
@@ -147,6 +148,17 @@ public class Domain extends Host {
         return record != null ? record.getRule() : null;
     }
     
+    
+    /**
+     * Provides the matched public suffix in the ICANN part of the list,
+     * regardless of whether a record was matched or not.
+     * 
+     * @return the matched public suffix, or null for no matched public suffix
+     */
+    public String getPublicSuffix() {
+        return publicSuffix;
+    }
+    
     /**
      * Provides the most specific existing record of the domain, which can be
      * used to group domains by site or avoid privacy-damaging cookies.
@@ -220,9 +232,9 @@ public class Domain extends Host {
     
     private void match() {
         if (!isMatched) {
-            registeredRecord = getRecord(icannRules.get(tld), labels);
+            registeredRecord = getRecord(labels, true);
             if (registeredRecord != null) {
-                Record record = getRecord(privateRules.get(tld), labels);
+                Record record = getRecord(labels, false);
                 if (record != null && !record.getEntry().equals("www." + registeredRecord.getEntry())) {
                     subleasedRecord = record;
                 }
@@ -231,12 +243,16 @@ public class Domain extends Host {
         }
     }
 
-    private Record getRecord(List<Rule> rules, String[] labels) {
+    private Record getRecord(String[] labels, boolean isPublic) {
         Record record = null;
+        List<Rule> rules = isPublic ? icannRules.get(tld) : privateRules.get(tld);
         if (rules != null) {
             for (Rule rule : rules) {
                 record = rule.match(labels);
                 if (record != null) {
+                    if (isPublic) {
+                        this.publicSuffix = record.getRule();
+                    }
                     if (record.getEntry().isEmpty()) {
                         record = null;
                     }
@@ -251,7 +267,7 @@ public class Domain extends Host {
     public String toString() {
         return "{ fqdn => " + fqdn + ", labels => " + Arrays.toString(labels)
                 + ", tld => " + tld + ", sld => " + sld + ", record => "
-                + getRecord() + ", isLeased => " + isSubleased() + " }";
+                + getRecord() + ", isSubleased => " + isSubleased() + ", publicSuffix => " + publicSuffix + " }";
     }
     
     public static void main(String[] args) {
@@ -271,16 +287,16 @@ public class Domain extends Host {
     
     private static class Rule implements Comparable<Rule> {
         
-        private String definition;
+        private String rule;
         
         private boolean isException;
         
         private String[] patterns;
         
-        private Rule(String definition) {
-            this.definition = definition;
-            isException = definition.startsWith("!");                    
-            patterns = IDN.toASCII(definition.replaceAll("[!]", "")).split("\\.");
+        private Rule(String rule) {
+            this.rule = rule;
+            isException = rule.startsWith("!");                    
+            patterns = IDN.toASCII(rule.replaceAll("[!]", "")).split("\\.");
         }
         
         Record match(String[] labels) {
@@ -294,12 +310,14 @@ public class Domain extends Host {
                     return null;
                 }
             }
+            String suffix = null;
             if (isException) {
                 if (labels.length < patterns.length) {
                     return null;
                 }
             } else {
                 if (patterns.length < labels.length) {
+                    suffix = entry;
                     entry = labels[labels.length - (patterns.length + 1)] + '.' + entry;                
                 } else {
                     entry = "";
@@ -307,10 +325,8 @@ public class Domain extends Host {
             }
             Record record = new Record();
             record.setEntry(entry);
-            if (entry.isEmpty()) {
-                record.setRule(definition);
-                record.setSuffix(isException ? entry : entry.substring(Math.max(0, entry.indexOf('.') + 1)));                
-            }
+            record.setSuffix(suffix);
+            record.setRule(rule);
             return record;
         }
         
@@ -374,7 +390,7 @@ public class Domain extends Host {
                 while ((line = bufferedReader.readLine()) != null) {
                     if (!line.matches("(\\s+.*)|(/+.*)") && !line.isEmpty()) {
                         try {
-                            rules.add(new Rule(line));                        
+                            rules.add(new Rule(line.trim()));                        
                         } catch (Exception e) {
                             log.error("Failed to parse public domain suffix rule from line: " + line, e);
                         }
@@ -403,7 +419,7 @@ public class Domain extends Host {
         public String toString() {
             StringBuilder builder = new StringBuilder();
             builder.append("[ definition => ");
-            builder.append(definition);
+            builder.append(rule);
             builder.append(", labels => ");
             builder.append(Arrays.asList(patterns));
             builder.append(", isException => ");

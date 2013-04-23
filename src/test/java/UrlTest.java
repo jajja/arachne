@@ -64,7 +64,6 @@ public class UrlTest {
         } catch (MalformedUriException e) {
             Assert.fail(e.getMessage());
         }
-        
     }
     
 }
