@@ -272,14 +272,17 @@ public class Domain extends Host {
     
     public static void main(String[] args) {
         try {
-            System.out.println(new Domain("peat.se"));
-            System.out.println(new Domain("peat.wordpress.se"));
-            System.out.println(new Domain("peat.wordpress.com"));
-            System.out.println(new Domain("peat.co.uk"));
-            System.out.println(new Domain("peat.co.se"));
-            System.out.println(new Domain("pEaT.sE"));
-            System.out.println(new Domain("peat.local"));
-            System.out.println(new Domain("local"));
+//            System.out.println(new Domain("peat.se"));
+//            System.out.println(new Domain("peat.wordpress.se"));
+//            System.out.println(new Domain("peat.wordpress.com"));
+//            System.out.println(new Domain("peat.co.uk"));
+//            System.out.println(new Domain("peat.co.se"));
+//            System.out.println(new Domain("pEaT.sE"));
+//            System.out.println(new Domain("peat.local"));
+//            System.out.println(new Domain("local"));
+            System.out.println(new Domain("lol.lol.mil.no"));
+            System.out.println(new Domain("lol.mil.no"));
+            System.out.println(new Domain("mil.no"));
         } catch (MalformedDomainException e) {
             e.printStackTrace();
         }
@@ -291,12 +294,16 @@ public class Domain extends Host {
         
         private boolean isException;
         
+        private boolean isExact;
+        
         private String[] patterns;
         
         private Rule(String rule) {
             this.rule = rule;
             isException = rule.startsWith("!");                    
-            patterns = IDN.toASCII(rule.replaceAll("[!]", "")).split("\\.");
+            isExact = rule.startsWith("?");
+            isException = isException || isExact;
+            patterns = IDN.toASCII(rule.replaceAll("[!?]", "")).split("\\.");
         }
         
         Record match(String[] labels) {
@@ -314,6 +321,11 @@ public class Domain extends Host {
             if (isException) {
                 if (labels.length < patterns.length) {
                     return null;
+                } else {
+                    if (isExact && labels.length != patterns.length) {
+                        return null;                        
+                    }
+                    suffix = isExact ? entry.substring(Math.max(0, entry.indexOf('.') + 1)) : entry;
                 }
             } else {
                 if (patterns.length < labels.length) {
@@ -335,7 +347,7 @@ public class Domain extends Host {
         }
         
         private int weight() {
-            return patterns.length + (isException ? 255 : 0);
+            return patterns.length + (isException ? 255 : 0) + (isExact ? 255 : 0);
         }
         
         static Map<String, List<Rule>> loadIcann() {
