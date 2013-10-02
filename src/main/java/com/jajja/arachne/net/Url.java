@@ -144,8 +144,7 @@ public class Url {
 
     public static String repairURI(String str) {
         str = str.trim();
-
-        if (!schemeValidationPattern.matcher(str).matches()) {
+        if (!schemeValidationPattern.matcher(str).find()) {
             str = "http://" + str;
         } else {
             Matcher m = repairPattern.matcher(str);
