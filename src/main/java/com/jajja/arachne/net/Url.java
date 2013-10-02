@@ -219,7 +219,7 @@ public class Url {
     }
 
     public void setHost(String host) throws MalformedDomainException {
-        this.host = Host.get(string);
+        this.host = Host.get(host);
     }
 
     public Integer getPort() {
