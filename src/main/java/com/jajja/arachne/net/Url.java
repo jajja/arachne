@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2013 Jajja Communications AB
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,6 +25,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
@@ -35,7 +36,7 @@ import com.jajja.arachne.exceptions.MalformedUriException;
 
 /**
  * XXX: First draft for URL with proper URI parsing
- * 
+ *
  * @author Andreas Allerdahl <andreas.allerdahl@jajja.com>
  * @author Martin Korinth <martin.korinth@jajja.com>
  */
@@ -44,7 +45,6 @@ public class Url {
     private final static Pattern schemeValidationPattern = Pattern.compile("^[a-z][a-z0-9*.-]*:", Pattern.CASE_INSENSITIVE);
     private final static Pattern repairPattern = Pattern.compile("^([a-z][a-z0-9*.-]*):/+(.*)", Pattern.CASE_INSENSITIVE);
     private final static Pattern deprefixHostPattern = Pattern.compile("^(www|ftp|smtp|mail|pop)[0-9]*\\.", Pattern.CASE_INSENSITIVE);
-    
     String string;
     String scheme;
     String userInfo;
@@ -55,41 +55,6 @@ public class Url {
     String querySeparator = "&";
     String fragment;
     String encoding;
-
-//    private void parseHostAndPort(String str) throws URISyntaxException {
-//        int pos;
-//
-//        if (str.charAt(0) == '[') {
-//            // IPv6
-//            int end = str.indexOf(']', 1);
-//
-//            if (end == -1)
-//                throw new URISyntaxException(str, "terminating bracket not found");
-//
-//            host = str.substring(0, end + 1);
-//            str = str.substring(end + 1);
-//
-//            if (str.equals(""))
-//                return;
-//            if (str.charAt(0) != ':') {
-//                throw new URISyntaxException(str, "colon after host expected");
-//            }
-//            str = str.substring(1);
-//        } else {
-//            if ((pos = str.indexOf(':')) >= 0) {
-//                host = str.substring(0, pos);
-//                str = str.substring(pos + 1);
-//            } else {
-//                host = str;
-//                return;
-//            }
-//        }
-//
-//        Integer port = Integer.parseInt(str);
-//        if (port == null || port < 1 || port > 65535)
-//            throw new URISyntaxException(str, "invalid port");
-//        this.port = port;
-//    }
 
     private void parse() throws MalformedUriException {
         int pos;
@@ -221,21 +186,21 @@ public class Url {
     public Host getHost() {
         return host;
     }
-    
+
     public Domain getDomain() {
         return host instanceof Domain ? (Domain) host : null;
     }
-    
+
     public Record getRecord() {
         Domain domain = getDomain();
         return domain != null ? domain.getRecord() : null;
     }
-    
+
     public Record getRegisteredRecord() {
         Domain domain = getDomain();
         return domain != null ? domain.getRegisteredRecord() : null;
     }
-    
+
     public Record getSubleasedRecord() {
         Domain domain = getDomain();
         return domain != null ? domain.getSubleasedRecord() : null;
@@ -253,7 +218,7 @@ public class Url {
     public void setHost(Host host) {
         this.host = host;
     }
-    
+
     public void setHost(String host) throws MalformedDomainException {
         this.host = Host.get(string);
     }
@@ -542,12 +507,60 @@ public class Url {
         }
     }
 
+    public String getLocalPath() {
+        StringBuilder sb = new StringBuilder();
+
+        if (path != null)
+            sb.append(path);
+        String query = getQuery();
+        if (query != null) {
+            sb.append('?');
+            sb.append(query);
+        }
+        if (fragment != null) {
+            sb.append('#');
+            sb.append(fragment);
+        }
+
+        return sb.toString();
+    }
+
+    // XXX replace with getservbyname()... https://github.com/wmeissner/jnr-netdb ?
+    private static HashMap<Integer, String> schemePorts = new HashMap<Integer, String>();
+    static {
+        schemePorts.put(21, "ftp");
+        schemePorts.put(80, "http");
+        schemePorts.put(443, "https");
+    }
+
+    public Url normalize() {
+        Url url = new Url(this);
+        try {
+            url.setScheme(getScheme().toLowerCase());
+            try {
+                url.setHost(getHost().getString().toLowerCase());
+            } catch (MalformedDomainException e) {
+                // Highly unlikely
+                throw new RuntimeException(e);
+            }
+            String portScheme;
+            if (url.getPort() != null && (portScheme = schemePorts.get(url.getPort())) != null && portScheme.equals(getScheme())) {
+                url.setPort(null);
+            }
+        } catch (URISyntaxException e) {
+        }
+
+        // XXX rencode path, qparam
+
+        return url;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        
+
         String host = this.host.getString();
-        
+
         sb.append(scheme);
         sb.append("://");
 
