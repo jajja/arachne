@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2013 Jajja Communications AB
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -44,37 +44,36 @@ import com.jajja.arachne.exceptions.MalformedDomainException;
  * A class for parsing Internet domains and matching public suffix records. The
  * public suffix records can be used to group domains by site or to avoid
  * privacy-damaging cookies related to domain hierarchy.
- * 
+ *
  * The public suffix implementation of this class is based on the public suffix
  * reference initiative by Mozilla. The original public suffix list has been
  * split into ICANN "registered" and private "subleased" records. Several
  * private records such as *.wordpress.com or the like have been added to the
  * private list, and the ICANN list has been augmented with missing entries.
- * 
+ *
  * For reference check out: http://publicsuffix.org
- * 
+ *
  * @author Martin Korinth <martin.korinth@jajja.com>
  */
 public class Domain extends Host {
-    
+
     private static Log log = LogFactory.getLog(Domain.class);
     private static Map<String, List<Rule>> icannRules = Rule.loadIcann();
     private static Map<String, List<Rule>> privateRules = Rule.loadPrivate();
-    
+
     private String[] labels;
     private boolean isMatched = false;
-    
+
     private String fqdn;
     private String tld;
-    private String sld;
     private Record registeredRecord;
     private Record subleasedRecord;
     private String publicSuffix;
-    
+
     /**
      * Creates a domain by parsing the name and matching records from the public
      * suffix lists for ICANN "registered" and private "subleased" records.
-     * 
+     *
      * @param name
      *            the domain name
      * @throws MalformedDomainException
@@ -85,38 +84,29 @@ public class Domain extends Host {
         parse();
         match();
     }
-    
+
     /**
      * Provides the fully qualified domain name of the domain, all in lower-case
      * letters.
-     * 
+     *
      * @return the fully qualified domain name
      */
     public String getFqdn() {
         return fqdn;
     }
-    
+
     /**
      * Provides the top level domain (name) of the domain, all in lower-case letters.
-     * 
+     *
      * @return the top level domain
      */
     public String getTld() {
         return tld;
     }
-    
-    /**
-     * Provides the second level domain (name) of the domain, all in lower-case letters.
-     * 
-     * @return the top level domain
-     */
-    public String getSld() {
-        return sld;
-    }
-    
+
     /**
      * Provides the suffix of the most specific existing record of the domain.
-     * 
+     *
      * @return the suffix of the most specific existing record of the domain if
      *         such exists, otherwise null
      */
@@ -124,10 +114,10 @@ public class Domain extends Host {
         Record record = getRecord();
         return record != null ? record.getSuffix() : null;
     }
-    
+
     /**
      * Provides the entry of the most specific existing record of the domain.
-     * 
+     *
      * @return the suffix of the most specific existing record of the domain if
      *         such exists, otherwise null
      */
@@ -135,11 +125,11 @@ public class Domain extends Host {
         Record record = getRecord();
         return record != null ? record.getEntry() : null;
     }
-    
+
     /**
      * Provides the matched rule of the most specific existing record of the
      * domain.
-     * 
+     *
      * @return the matched rule of the most specific existing record of the
      *         domain if such exists, otherwise null
      */
@@ -147,22 +137,22 @@ public class Domain extends Host {
         Record record = getRecord();
         return record != null ? record.getRule() : null;
     }
-    
-    
+
+
     /**
      * Provides the matched public suffix in the ICANN part of the list,
      * regardless of whether a record was matched or not.
-     * 
+     *
      * @return the matched public suffix, or null for no matched public suffix
      */
     public String getPublicSuffix() {
         return publicSuffix;
     }
-    
+
     /**
      * Provides the most specific existing record of the domain, which can be
      * used to group domains by site or avoid privacy-damaging cookies.
-     * 
+     *
      * @return the most specific record match, the subleased record if such
      *         exist, the registered record if such exists, otherwise null
      */
@@ -172,7 +162,7 @@ public class Domain extends Host {
 
     /**
      * Provides the registered record of the domain if such exists.
-     * 
+     *
      * @return the registered record if such exists, otherwise null
      */
     public Record getRegisteredRecord() {
@@ -181,55 +171,52 @@ public class Domain extends Host {
 
     /**
      * Provides the subleased record of the domain if such exists.
-     * 
+     *
      * @return the subleased record if such exists, otherwise null
      */
     public Record getSubleasedRecord() {
         return subleasedRecord;
     }
-    
+
     /**
      * Tells whether the domain is a registered or not. A domain is registered
      * if it is a subdomain to a reserved public prefix according to ICANN.
-     * 
+     *
      * @return true if the domain is registered, false otherwise
      */
     public boolean isRegistered() {
         return registeredRecord != null;
     }
-    
+
     /**
      * Tells whether the domain is subleased or not. A domain is subleased if it
      * is a subdomain to a registered domain known to provide subdomains to
      * externally or internally hosted autonomous sites.
-     * 
+     *
      * @return true if the domain is subleased, false otherwise
      */
     public boolean isSubleased() {
         return subleasedRecord != null;
     }
-    
+
     private void parse() throws MalformedDomainException {
         fqdn = getString().toLowerCase();
         if (fqdn.isEmpty())
-            throw new MalformedDomainException(getString(), "Empty domain!");            
+            throw new MalformedDomainException(getString(), "Empty domain!");
         labels = fqdn.split("\\."); // TODO: implement proper string split for performance
-        if (253 < fqdn.length()) 
+        if (253 < fqdn.length())
             throw new MalformedDomainException(getString(), "Too many characters in fully qualified domain name!");
-        if (127 < labels.length) 
-            throw new MalformedDomainException(getString(), "Too many labels in fully qualified domain name!");            
+        if (127 < labels.length)
+            throw new MalformedDomainException(getString(), "Too many labels in fully qualified domain name!");
         for (String label : labels) {
-            if (63 < label.length()) 
+            if (63 < label.length())
                 throw new MalformedDomainException(getString(), "Too many characters in domain name!");
             if (!label.matches("[0-9a-z-]+")) // TODO: compile this statically or search manually for performance
                 throw new MalformedDomainException(getString(), "Invalid charcters in domain name!");
         }
-        tld = labels[labels.length - 1];            
-        if (1 < labels.length) {
-            sld = labels[labels.length - 2];
-        }
+        tld = labels[labels.length - 1];
     }
-    
+
     private void match() {
         if (!isMatched) {
             registeredRecord = getRecord(labels, true);
@@ -262,14 +249,14 @@ public class Domain extends Host {
         }
         return record;
     }
-    
+
     @Override
     public String toString() {
         return "{ fqdn => " + fqdn + ", labels => " + Arrays.toString(labels)
-                + ", tld => " + tld + ", sld => " + sld + ", record => "
+                + ", tld => " + tld + ", record => "
                 + getRecord() + ", isSubleased => " + isSubleased() + ", publicSuffix => " + publicSuffix + " }";
     }
-    
+
     public static void main(String[] args) {
         try {
 //            System.out.println(new Domain("peat.se"));
@@ -287,25 +274,25 @@ public class Domain extends Host {
             e.printStackTrace();
         }
     }
-    
+
     private static class Rule implements Comparable<Rule> {
-        
+
         private String rule;
-        
+
         private boolean isException;
-        
+
         private boolean isExact;
-        
+
         private String[] patterns;
-        
+
         private Rule(String rule) {
             this.rule = rule;
-            isException = rule.startsWith("!");                    
+            isException = rule.startsWith("!");
             isExact = rule.startsWith("?");
             isException = isException || isExact;
             patterns = IDN.toASCII(rule.replaceAll("[!?]", "")).split("\\.");
         }
-        
+
         Record match(String[] labels) {
             String entry = "";
             for (int i = 0; i < Math.min(patterns.length, labels.length); i++) {
@@ -323,14 +310,14 @@ public class Domain extends Host {
                     return null;
                 } else {
                     if (isExact && labels.length != patterns.length) {
-                        return null;                        
+                        return null;
                     }
                     suffix = isExact ? entry.substring(Math.max(0, entry.indexOf('.') + 1)) : entry;
                 }
             } else {
                 if (patterns.length < labels.length) {
                     suffix = entry;
-                    entry = labels[labels.length - (patterns.length + 1)] + '.' + entry;                
+                    entry = labels[labels.length - (patterns.length + 1)] + '.' + entry;
                 } else {
                     entry = "";
                 }
@@ -341,15 +328,15 @@ public class Domain extends Host {
             record.setRule(rule);
             return record;
         }
-        
+
         private String getTld() {
             return patterns[patterns.length - 1];
         }
-        
+
         private int weight() {
             return patterns.length + (isException ? 255 : 0) + (isExact ? 255 : 0);
         }
-        
+
         static Map<String, List<Rule>> loadIcann() {
             Map<String, List<Rule>> map = new HashMap<String, List<Rule>>();
             add("/suffix/icann_effective_tld_names.dat", map);
@@ -359,7 +346,7 @@ public class Domain extends Host {
             }
             return map;
         }
-        
+
         static Map<String, List<Rule>> loadPrivate() {
             Map<String, List<Rule>> map = new HashMap<String, List<Rule>>();
             add("/suffix/private_effective_tld_names.dat", map);
@@ -369,7 +356,7 @@ public class Domain extends Host {
             }
             return map;
         }
-        
+
         private static void add(String file,  Map<String, List<Rule>> map) {
             for (Rule rule : read(file)) {
                 List<Rule> rules = map.get(rule.getTld());
@@ -377,10 +364,10 @@ public class Domain extends Host {
                     rules = new LinkedList<Rule>();
                     map.put(rule.getTld(), rules);
                 }
-                rules.add(rule);            
+                rules.add(rule);
             }
         }
-        
+
         private static List<Rule> read(String file) {
             List<Rule> rules = null;
             try {
@@ -392,7 +379,7 @@ public class Domain extends Host {
             }
             return rules != null ? rules : new LinkedList<Rule>();
         }
-        
+
         private static List<Rule> read(InputStream inputStream) {
             BufferedReader bufferedReader = null;
             List<Rule> rules = new LinkedList<Rule>();
@@ -402,7 +389,7 @@ public class Domain extends Host {
                 while ((line = bufferedReader.readLine()) != null) {
                     if (!line.matches("(\\s+.*)|(/+.*)") && !line.isEmpty()) {
                         try {
-                            rules.add(new Rule(line.trim()));                        
+                            rules.add(new Rule(line.trim()));
                         } catch (Exception e) {
                             log.error("Failed to parse public domain suffix rule from line: " + line, e);
                         }
@@ -439,7 +426,7 @@ public class Domain extends Host {
             builder.append(" ]");
             return builder.toString();
         }
-        
+
     }
-    
+
 }
