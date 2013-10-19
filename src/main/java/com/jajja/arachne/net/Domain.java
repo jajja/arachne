@@ -34,6 +34,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,6 +59,7 @@ import com.jajja.arachne.exceptions.MalformedDomainException;
  */
 public class Domain extends Host {
 
+    private final static Pattern deprefixHostPattern = Pattern.compile("^(www|ftp|smtp|mail|pop)[0-9]*\\.", Pattern.CASE_INSENSITIVE);
     private static Log log = LogFactory.getLog(Domain.class);
     private static Map<String, List<Rule>> icannRules = Rule.loadIcann();
     private static Map<String, List<Rule>> privateRules = Rule.loadPrivate();
@@ -178,6 +181,16 @@ public class Domain extends Host {
     public Record getSubleasedRecord() {
         match();
         return _subleasedRecord;
+    }
+
+    public String getDeprefixed() {
+        Record record = getRegisteredRecord();
+        // Don't remove www from "www.com", etc
+        if (record == null || record.getEntry().equalsIgnoreCase(getString())) {
+            return getString();
+        }
+        Matcher m = deprefixHostPattern.matcher(getString());
+        return m.replaceFirst("");
     }
 
     /**

@@ -44,7 +44,6 @@ public class Url {
     public final static int REPAIR = 0;
     private final static Pattern schemeValidationPattern = Pattern.compile("^[a-z][a-z0-9*.-]*:", Pattern.CASE_INSENSITIVE);
     private final static Pattern repairPattern = Pattern.compile("^([a-z][a-z0-9*.-]*):/+(.*)", Pattern.CASE_INSENSITIVE);
-    private final static Pattern deprefixHostPattern = Pattern.compile("^(www|ftp|smtp|mail|pop)[0-9]*\\.", Pattern.CASE_INSENSITIVE);
     String string;
     String scheme;
     String userInfo;
@@ -206,12 +205,8 @@ public class Url {
     }
 
     public String getDeprefixedHost() {
-        Record record = getRegisteredRecord();
-        if (record == null || record.getEntry().equalsIgnoreCase(host.getString())) {
-            return host.getString();
-        }
-        Matcher m = deprefixHostPattern.matcher(host.getString());
-        return m.replaceFirst("");
+        Domain domain = getDomain();
+        return domain != null ? domain.getDeprefixed() : null;
     }
 
     public void setHost(Host host) {
