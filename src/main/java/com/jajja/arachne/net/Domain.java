@@ -66,9 +66,9 @@ public class Domain extends Host {
 
     private String fqdn;
     private String tld;
-    private Record registeredRecord;
-    private Record subleasedRecord;
-    private String publicSuffix;
+    private Record _registeredRecord;
+    private Record _subleasedRecord;
+    private String _publicSuffix;
 
     /**
      * Creates a domain by parsing the name and matching records from the public
@@ -82,7 +82,6 @@ public class Domain extends Host {
     public Domain(String name) throws MalformedDomainException {
         super(IDN.toASCII(name));
         parse();
-        match();
     }
 
     /**
@@ -146,7 +145,8 @@ public class Domain extends Host {
      * @return the matched public suffix, or null for no matched public suffix
      */
     public String getPublicSuffix() {
-        return publicSuffix;
+        match();
+        return _publicSuffix;
     }
 
     /**
@@ -157,7 +157,7 @@ public class Domain extends Host {
      *         exist, the registered record if such exists, otherwise null
      */
     public Record getRecord() {
-        return isSubleased() ? subleasedRecord : registeredRecord;
+        return isSubleased() ? getSubleasedRecord() : getRegisteredRecord();
     }
 
     /**
@@ -166,7 +166,8 @@ public class Domain extends Host {
      * @return the registered record if such exists, otherwise null
      */
     public Record getRegisteredRecord() {
-        return registeredRecord;
+        match();
+        return _registeredRecord;
     }
 
     /**
@@ -175,7 +176,8 @@ public class Domain extends Host {
      * @return the subleased record if such exists, otherwise null
      */
     public Record getSubleasedRecord() {
-        return subleasedRecord;
+        match();
+        return _subleasedRecord;
     }
 
     /**
@@ -185,7 +187,7 @@ public class Domain extends Host {
      * @return true if the domain is registered, false otherwise
      */
     public boolean isRegistered() {
-        return registeredRecord != null;
+        return getRegisteredRecord() != null;
     }
 
     /**
@@ -196,7 +198,7 @@ public class Domain extends Host {
      * @return true if the domain is subleased, false otherwise
      */
     public boolean isSubleased() {
-        return subleasedRecord != null;
+        return getSubleasedRecord() != null;
     }
 
     private void parse() throws MalformedDomainException {
@@ -219,11 +221,11 @@ public class Domain extends Host {
 
     private void match() {
         if (!isMatched) {
-            registeredRecord = getRecord(labels, true);
-            if (registeredRecord != null) {
+            _registeredRecord = getRecord(labels, true);
+            if (_registeredRecord != null) {
                 Record record = getRecord(labels, false);
-                if (record != null && !record.getEntry().equals("www." + registeredRecord.getEntry())) {
-                    subleasedRecord = record;
+                if (record != null && !record.getEntry().equals("www." + _registeredRecord.getEntry())) {
+                    _subleasedRecord = record;
                 }
             }
             isMatched = true;
@@ -238,7 +240,7 @@ public class Domain extends Host {
                 record = rule.match(labels);
                 if (record != null) {
                     if (isPublic) {
-                        this.publicSuffix = record.getRule();
+                        this._publicSuffix = record.getRule();
                     }
                     if (record.getEntry().isEmpty()) {
                         record = null;
@@ -254,7 +256,7 @@ public class Domain extends Host {
     public String toString() {
         return "{ fqdn => " + fqdn + ", labels => " + Arrays.toString(labels)
                 + ", tld => " + tld + ", record => "
-                + getRecord() + ", isSubleased => " + isSubleased() + ", publicSuffix => " + publicSuffix + " }";
+                + getRecord() + ", isSubleased => " + isSubleased() + ", publicSuffix => " + getPublicSuffix() + " }";
     }
 
     public static void main(String[] args) {
