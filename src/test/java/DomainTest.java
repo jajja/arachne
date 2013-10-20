@@ -6,41 +6,41 @@ import com.jajja.arachne.net.Domain;
 import com.jajja.arachne.net.Record;
 
 public class DomainTest {
-    
+
     @Test public void mixcase() { // Mixed case.
         checkPublicSuffix("COM", null);
         checkPublicSuffix("example.COM", "example.com");
-        checkPublicSuffix("WwW.example.COM", "example.com");       
+        checkPublicSuffix("WwW.example.COM", "example.com");
     }
 
     @Test public void period() { // Leading dot.
         checkPublicSuffix(".com", null);
         checkPublicSuffix(".example", null);
         checkPublicSuffix(".example.com", null);
-        checkPublicSuffix(".example.example", null);       
+        checkPublicSuffix(".example.example", null);
     }
-    
+
     @Test public void example() { // Unlisted TLD.
         checkPublicSuffix("example", null);
         checkPublicSuffix("example.example", null);
         checkPublicSuffix("b.example.example", null);
         checkPublicSuffix("a.b.example.example", null);
     }
-    
+
     @Test public void local() { // Listed, but non-Internet, TLD.
         checkPublicSuffix("local", null);
         checkPublicSuffix("example.local", null);
         checkPublicSuffix("b.example.local", null);
         checkPublicSuffix("a.b.example.local", null);
     }
-    
+
     @Test public void single() { // TLD with only 1 rule.
         checkPublicSuffix("biz", null);
         checkPublicSuffix("domain.biz", "domain.biz");
         checkPublicSuffix("b.domain.biz", "domain.biz");
         checkPublicSuffix("a.b.domain.biz", "domain.biz");
     }
-    
+
     @Test public void tiers() { // TLD with some 2-level rules.
         checkPublicSuffix("com", null);
         checkPublicSuffix("example.com", "example.com");
@@ -52,16 +52,16 @@ public class DomainTest {
         checkPublicSuffix("a.b.example.uk.com", "example.uk.com");
         checkPublicSuffix("test.ac", "test.ac");
     }
-    
+
     @Test public void wildcard() { // TLD with only 1 (wildcard) rule.
         checkPublicSuffix("cy", null);
         checkPublicSuffix("c.cy", null);
         checkPublicSuffix("b.c.cy", "b.c.cy");
         checkPublicSuffix("a.b.c.cy", "b.c.cy");
     }
-    
+
     @Test public void complex() { // More complex TLD.
-        
+
         checkPublicSuffix("jp", null);
         checkPublicSuffix("test.jp", "test.jp");
         checkPublicSuffix("www.test.jp", "test.jp");
@@ -79,7 +79,7 @@ public class DomainTest {
         checkPublicSuffix("city.kobe.jp", "city.kobe.jp");
         checkPublicSuffix("www.city.kobe.jp", "city.kobe.jp");
     }
-    
+
     @Test public void exceptions() { // TLD with a wildcard rule and exceptions.
         checkPublicSuffix("om", null);
         checkPublicSuffix("test.om", null);
@@ -88,7 +88,7 @@ public class DomainTest {
         checkPublicSuffix("songfest.om", "songfest.om");
         checkPublicSuffix("www.songfest.om", "songfest.om");
     }
-    
+
     @Test public void usk12() { // US K12.
         checkPublicSuffix("us", null);
         checkPublicSuffix("test.us", "test.us");
@@ -104,7 +104,7 @@ public class DomainTest {
     static void checkPublicSuffix(String name, String entry) {
         boolean isPassed = false;
         try {
-            Record record = new Domain(name).getRecord();
+            Record record = new Domain(name).getRegisteredRecord();
             boolean isNull = entry == null && record == null;
             boolean isEqual = entry != null && record != null && entry.equals(record.getEntry());
             isPassed = isNull || isEqual;
@@ -114,10 +114,10 @@ public class DomainTest {
         } catch (MalformedDomainException e) {
             isPassed = entry == null;
             if (!isPassed) {
-                System.out.println("Fail! " + e.getMessage() + " (" + e.getDomain() + ")");                
+                System.out.println("Fail! " + e.getMessage() + " (" + e.getDomain() + ")");
             }
         }
         Assert.assertTrue(isPassed);
     }
-    
+
 }

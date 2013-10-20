@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2013 Jajja Communications AB
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,15 +27,15 @@ import com.jajja.arachne.exceptions.MalformedDomainException;
 /**
  * An abstract Internet host, which can be either an Address or a Domain, as
  * entities regulated by ICANN.
- * 
+ *
  * @author Martin Korinth <martin.korinth@jajja.com>
  */
 public abstract class Host {
-    
+
     /**
      * Facilitates creation of a host according to the given string
      * representation of a host, such as hostname or address string literal.
-     * 
+     *
      * @param string
      *            the string representing a host
      * @return the host represented by either an address or a domain
@@ -53,34 +53,35 @@ public abstract class Host {
 
     /**
      * Tells whether the host is an address or not.
-     * 
+     *
      * @return true if the host is instance of an address, false otherwise
      */
     public boolean isAddress() {
         return this instanceof Address;
     }
-    
+
     /**
      * Tells whether the host is a domain or not.
-     * 
+     *
      * @return true if the host is instance of a domain, false otherwise
      */
     public boolean isDomain() {
         return this instanceof Domain;
     }
-    
-    private String string;
-    
+
+    protected final String string;
+
     Host(String string) {
         this.string = string;
     }
-    
+
     /**
      * Provides the string representation of the host, the hostname.
-     * 
+     *
      * @return the string representation
      */
-    public String getString() {
+    @Override
+    public final String toString() {
         return string;
     }
 

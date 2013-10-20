@@ -13,7 +13,7 @@
     <name>arachne</name>
     <groupId>com.jajja</groupId>
     <artifactId>arachne</artifactId>
-    <version>1.0.0-rc2</version>
+    <version>1.0.0-rc3</version>
     <description>Arachne is a simplistic net &amp; spider toolbox.</description>
     <packaging>jar</packaging>
 

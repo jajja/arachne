@@ -43,15 +43,17 @@ import org.apache.commons.logging.LogFactory;
 import com.jajja.arachne.exceptions.MalformedDomainException;
 
 /**
- * A class for parsing Internet domains and matching public suffix records. The
- * public suffix records can be used to group domains by site or to avoid
- * privacy-damaging cookies related to domain hierarchy.
+ * A class for parsing Internet domains and optionally matching them against the
+ * "Public Suffix List" (http://publicsuffix.org/).
  *
- * The public suffix implementation of this class is based on the public suffix
- * reference initiative by Mozilla. The original public suffix list has been
- * split into ICANN "registered" and private "subleased" records. Several
- * private records such as *.wordpress.com or the like have been added to the
- * private list, and the ICANN list has been augmented with missing entries.
+ * This class accurately implements the public suffix specification, but also
+ * provides support for identifying "subleased" domains, such as dyndns.org.
+ *
+ * To support subleased domains, the provided copy of the public suffix list
+ * has been split into multiple files; one "ICANN registered" part, and one
+ * "subleased" part. In addition to this, the list has been extended by several
+ * private records (such as *.wordpress.com), and even some ICANN entries that
+ * appear to be missing from the public suffix list (such as com.tp).
  *
  * For reference check out: http://publicsuffix.org
  *
@@ -69,13 +71,12 @@ public class Domain extends Host {
 
     private String fqdn;
     private String tld;
-    private Record _registeredRecord;
+    private Record _icannRegisteredRecord;
     private Record _subleasedRecord;
     private String _publicSuffix;
 
     /**
-     * Creates a domain by parsing the name and matching records from the public
-     * suffix lists for ICANN "registered" and private "subleased" records.
+     * Creates a domain.
      *
      * @param name
      *            the domain name
@@ -88,8 +89,7 @@ public class Domain extends Host {
     }
 
     /**
-     * Provides the fully qualified domain name of the domain, all in lower-case
-     * letters.
+     * Provides the fully qualified domain name of the domain, in lowercase.
      *
      * @return the fully qualified domain name
      */
@@ -98,7 +98,9 @@ public class Domain extends Host {
     }
 
     /**
-     * Provides the top level domain (name) of the domain, all in lower-case letters.
+     * Provides the top level part of the domain in lowercase, e.g.
+     * "uk" for "www.foo.stwilfrids.devon.sch.uk".
+     *
      *
      * @return the top level domain
      */
@@ -107,70 +109,54 @@ public class Domain extends Host {
     }
 
     /**
-     * Provides the suffix of the most specific existing record of the domain.
+     * Provides the ICANN registered record of the domain if such exists.
      *
-     * @return the suffix of the most specific existing record of the domain if
-     *         such exists, otherwise null
+     * @return the registered record if such exists, otherwise null
      */
-    public String getSuffix() {
-        Record record = getRecord();
-        return record != null ? record.getSuffix() : null;
+    public Record getIcannRegisteredRecord() {
+        match();
+        return _icannRegisteredRecord;
     }
 
     /**
-     * Provides the entry of the most specific existing record of the domain.
+     * Provides the ICANN registered part of the domain.
+     * e.g. "foo.co.uk" for "baz.bar.foo.co.uk", null for "co.uk" (can not be registered).
      *
-     * @return the suffix of the most specific existing record of the domain if
-     *         such exists, otherwise null
+     * @return the ICANN registered part of the domain, or null if not an ICANN registered domain
      */
-    public String getEntry() {
-        Record record = getRecord();
+    public String getIcannRegistered() {
+        Record record = getIcannRegisteredRecord();
         return record != null ? record.getEntry() : null;
     }
 
     /**
-     * Provides the matched rule of the most specific existing record of the
-     * domain.
+     * Provides the suffix for the ICANN registered part of the domain.
+     * e.g. "co.uk" for "baz.bar.foo.co.uk", null for "co.uk" (can not be registered).
      *
-     * @return the matched rule of the most specific existing record of the
-     *         domain if such exists, otherwise null
+     * @return the suffix for the ICANN registered part of the domain, or null if not an ICANN registered domain
      */
-    public String getRule() {
-        Record record = getRecord();
+    public String getIcannRegisteredSuffix() {
+        Record record = getIcannRegisteredRecord();
+        return record != null ? record.getSuffix() : null;
+    }
+
+    /**
+     * Provides the rule matching the ICANN registered domain.
+     *
+     * @return the rule matching the ICANN registered domain, or null if not an ICANN registered domain
+     */
+    public String getIcannRegisteredRule() {
+        Record record = getIcannRegisteredRecord();
         return record != null ? record.getRule() : null;
     }
 
-
     /**
-     * Provides the matched public suffix in the ICANN part of the list,
-     * regardless of whether a record was matched or not.
+     * Tells whether the domain is an ICANN domain or not.
      *
-     * @return the matched public suffix, or null for no matched public suffix
+     * @return true if the domain is an ICANN registered domain, false otherwise
      */
-    public String getPublicSuffix() {
-        match();
-        return _publicSuffix;
-    }
-
-    /**
-     * Provides the most specific existing record of the domain, which can be
-     * used to group domains by site or avoid privacy-damaging cookies.
-     *
-     * @return the most specific record match, the subleased record if such
-     *         exist, the registered record if such exists, otherwise null
-     */
-    public Record getRecord() {
-        return isSubleased() ? getSubleasedRecord() : getRegisteredRecord();
-    }
-
-    /**
-     * Provides the registered record of the domain if such exists.
-     *
-     * @return the registered record if such exists, otherwise null
-     */
-    public Record getRegisteredRecord() {
-        match();
-        return _registeredRecord;
+    public boolean isIcannRegistered() {
+        return getRegisteredRecord() != null;
     }
 
     /**
@@ -183,19 +169,90 @@ public class Domain extends Host {
         return _subleasedRecord;
     }
 
-    public String getDeprefixed() {
-        Record record = getRegisteredRecord();
-        // Don't remove www from "www.com", etc
-        if (record == null || record.getEntry().equalsIgnoreCase(getString())) {
-            return getString();
-        }
-        Matcher m = deprefixHostPattern.matcher(getString());
-        return m.replaceFirst("");
+    /**
+     * Provides the subleased part of the domain.
+     *
+     * e.g. "foo.dyndns.org" for "baz.bar.foo.dyndns.org", null for "dyndns.org".
+     *
+     * @return the subleased part of the domain, or null
+     */
+    public String getSubleased() {
+        Record record = getSubleasedRecord();
+        return record != null ? record.getEntry() : null;
     }
 
     /**
-     * Tells whether the domain is a registered or not. A domain is registered
-     * if it is a subdomain to a reserved public prefix according to ICANN.
+     * Provides the suffix for the subleased part of the domain.
+     *
+     * e.g. "dyndns.org" for "baz.bar.dyndns.org", null for "dyndns.org".
+     *
+     * @return the suffix for the subleased part of the domain, or null
+     */
+    public String getSubleasedSuffix() {
+        Record record = getSubleasedRecord();
+        return record != null ? record.getSuffix() : null;
+    }
+
+    /**
+     * Provides the rule matching the subleased domain.
+     *
+     * @return the rule matching the subleased domain, or null
+     */
+    public String getSubleasedRule() {
+        Record record = getSubleasedRecord();
+        return record != null ? record.getRule() : null;
+    }
+
+    /**
+     * Tells whether the domain is subleased or not.
+     *
+     * @return true if the domain is subleased, false otherwise
+     */
+    public boolean isSubleased() {
+        return getSubleasedRecord() != null;
+    }
+
+    /**
+     * Provides the registered record, or null.
+     *
+     * @return the registered record, or null
+     */
+    public Record getRegisteredRecord() {
+        return isSubleased() ? getSubleasedRecord() : getIcannRegisteredRecord();
+    }
+
+    /**
+     * Provides the registered domain, or null.
+     *
+     * @return the registered domain, or null
+     */
+    public String getRegistered() {
+        Record record = getRegisteredRecord();
+        return record != null ? record.getEntry() : null;
+    }
+
+    /**
+     * Provides the suffix of the registered domain, or null.
+     *
+     * @return the suffix of the registered domain, or null
+     */
+    public String getRegisteredSuffix() {
+        Record record = getRegisteredRecord();
+        return record != null ? record.getSuffix() : null;
+    }
+
+    /**
+     * Provides the rule matching the registered domain, or null.
+     *
+     * @return the rule matching the registered domain, or null
+     */
+    public String getRegisteredRule() {
+        Record record = getRegisteredRecord();
+        return record != null ? record.getRule() : null;
+    }
+
+    /**
+     * Tells whether the domain is a registered or not.
      *
      * @return true if the domain is registered, false otherwise
      */
@@ -204,40 +261,50 @@ public class Domain extends Host {
     }
 
     /**
-     * Tells whether the domain is subleased or not. A domain is subleased if it
-     * is a subdomain to a registered domain known to provide subdomains to
-     * externally or internally hosted autonomous sites.
+     * Provides the matched public suffix in the ICANN part of the list,
+     * regardless of whether a record was matched or not.
      *
-     * @return true if the domain is subleased, false otherwise
+     * @return the matched public suffix, or null for no matched public suffix
      */
-    public boolean isSubleased() {
-        return getSubleasedRecord() != null;
+    public String getPublicSuffix() {   // XXX wtf is this for?
+        match();
+        return _publicSuffix;
+    }
+
+    public String getDeprefixed() {
+        String registered = getRegistered();
+        // Don't remove www from "www.com", etc
+        if (registered == null || registered.equalsIgnoreCase(string)) {
+            return string.toLowerCase();
+        }
+        Matcher m = deprefixHostPattern.matcher(string);
+        return m.replaceFirst("");
     }
 
     private void parse() throws MalformedDomainException {
-        fqdn = getString().toLowerCase();
+        fqdn = string.toLowerCase();
         if (fqdn.isEmpty())
-            throw new MalformedDomainException(getString(), "Empty domain!");
+            throw new MalformedDomainException(string, "Empty domain!");
         labels = fqdn.split("\\."); // TODO: implement proper string split for performance
         if (253 < fqdn.length())
-            throw new MalformedDomainException(getString(), "Too many characters in fully qualified domain name!");
+            throw new MalformedDomainException(string, "Too many characters in fully qualified domain name!");
         if (127 < labels.length)
-            throw new MalformedDomainException(getString(), "Too many labels in fully qualified domain name!");
+            throw new MalformedDomainException(string, "Too many labels in fully qualified domain name!");
         for (String label : labels) {
             if (63 < label.length())
-                throw new MalformedDomainException(getString(), "Too many characters in domain name!");
+                throw new MalformedDomainException(string, "Too many characters in domain name!");
             if (!label.matches("[0-9a-z-]+")) // TODO: compile this statically or search manually for performance
-                throw new MalformedDomainException(getString(), "Invalid charcters in domain name!");
+                throw new MalformedDomainException(string, "Invalid charcters in domain name!");
         }
         tld = labels[labels.length - 1];
     }
 
     private void match() {
         if (!isMatched) {
-            _registeredRecord = getRecord(labels, true);
-            if (_registeredRecord != null) {
+            _icannRegisteredRecord = getRecord(labels, true);
+            if (_icannRegisteredRecord != null) {
                 Record record = getRecord(labels, false);
-                if (record != null && !record.getEntry().equals("www." + _registeredRecord.getEntry())) {
+                if (record != null && !record.getEntry().equals("www." + _icannRegisteredRecord.getEntry())) {
                     _subleasedRecord = record;
                 }
             }
@@ -263,13 +330,6 @@ public class Domain extends Host {
             }
         }
         return record;
-    }
-
-    @Override
-    public String toString() {
-        return "{ fqdn => " + fqdn + ", labels => " + Arrays.toString(labels)
-                + ", tld => " + tld + ", record => "
-                + getRecord() + ", isSubleased => " + isSubleased() + ", publicSuffix => " + getPublicSuffix() + " }";
     }
 
     public static void main(String[] args) {
@@ -443,5 +503,4 @@ public class Domain extends Host {
         }
 
     }
-
 }

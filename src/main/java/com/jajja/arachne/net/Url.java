@@ -189,26 +189,6 @@ public class Url {
         return host instanceof Domain ? (Domain) host : null;
     }
 
-    public Record getRecord() {
-        Domain domain = getDomain();
-        return domain != null ? domain.getRecord() : null;
-    }
-
-    public Record getRegisteredRecord() {
-        Domain domain = getDomain();
-        return domain != null ? domain.getRegisteredRecord() : null;
-    }
-
-    public Record getSubleasedRecord() {
-        Domain domain = getDomain();
-        return domain != null ? domain.getSubleasedRecord() : null;
-    }
-
-    public String getDeprefixedHost() {
-        Domain domain = getDomain();
-        return domain != null ? domain.getDeprefixed() : null;
-    }
-
     public void setHost(Host host) {
         this.host = host;
     }
@@ -495,7 +475,7 @@ public class Url {
 
     public URI toURI() {
         try {
-            return new URI(scheme, userInfo, host.getString(), (port == null ? -1 : port), path, getQuery(), fragment);
+            return new URI(scheme, userInfo, host.toString(), (port == null ? -1 : port), path, getQuery(), fragment);
         } catch (URISyntaxException e) {
             return null;
         }
@@ -532,7 +512,7 @@ public class Url {
         try {
             url.setScheme(getScheme().toLowerCase());
             try {
-                url.setHost(getHost().getString().toLowerCase());
+                url.setHost(getHost().toString().toLowerCase());
             } catch (MalformedDomainException e) {
                 // Highly unlikely
                 throw new RuntimeException(e);
@@ -553,7 +533,7 @@ public class Url {
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        String host = this.host.getString();
+        String host = this.host.toString();
 
         sb.append(scheme);
         sb.append("://");

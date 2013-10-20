@@ -5,7 +5,7 @@ import com.jajja.arachne.exceptions.MalformedUriException;
 import com.jajja.arachne.net.Url;
 
 public class UrlTest {
-    
+
     @Test public void resolve() {
 
 //        assertResolve("http://a/b/c/d;p?q#f", "g:h", "g:h");                      // fails, result: g://h -- web browsers get it "wrong" too.
@@ -34,7 +34,7 @@ public class UrlTest {
         assertResolve("http://a/b/c/d;p?q#f", "../../g", "http://a/g");
 
         // abnormal tests
-        
+
         assertResolve("http://a/b/c/d;p?q#f", "", "http://a/b/c/d;p?q#f");
         //assertResolve("http://a/b/c/d;p?q#f", "../../../g", "http://a/../g");         // fails - mimicking web browsers
         //assertResolve("http://a/b/c/d;p?q#f", "../../../../g", "http://a/../../g");   // fails - mimicking web browsers
@@ -48,13 +48,13 @@ public class UrlTest {
         assertResolve("http://a/b/c/d;p?q#f", "./g/.", "http://a/b/c/g/");
         assertResolve("http://a/b/c/d;p?q#f", "g/./h", "http://a/b/c/g/h");
         assertResolve("http://a/b/c/d;p?q#f", "g/../h", "http://a/b/c/h");
-        
+
         // "should be avoided by future parsers"
-        
+
         //assertResolve("http://a/b/c/d;p?q#f", "http:g", "http:g");                    // fails
         //assertResolve("http://a/b/c/d;p?q#f", "http", "http:");                       // fails
     }
-    
+
     private void assertResolve(String url, String uri, String expected) {
         try {
             Url u = new Url(url);
@@ -65,5 +65,5 @@ public class UrlTest {
             Assert.fail(e.getMessage());
         }
     }
-    
+
 }
