@@ -55,7 +55,7 @@ public class UrlTest {
         //assertResolve("http://a/b/c/d;p?q#f", "http", "http:");                       // fails
     }
 
-    private void assertResolve(String url, String uri, String expected) {
+    private static void assertResolve(String url, String uri, String expected) {
         try {
             Url u = new Url(url);
             u = u.resolve(uri);
